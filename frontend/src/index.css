@@ -1,1 +1,64 @@
 @import "tailwindcss";
+
+/* Estilos personalizados */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Personalización de SweetAlert2 */
+.swal2-popup {
+  font-size: 1rem !important;
+}
+
+/* Mejorar inputs en móviles */
+input,
+select,
+textarea {
+  font-size: 16px !important; /* Previene zoom en iOS */
+}
+
+/* FIX: Modal de supervisor en móviles */
+.swal2-mobile-container {
+  padding: 10px !important;
+}
+
+.swal2-mobile-popup {
+  margin: 0 !important;
+  max-width: 90vw !important;
+}
+
+/* Asegurar que el modal no se mueva con el teclado */
+@supports (-webkit-touch-callout: none) {
+  /* iOS Safari */
+  .swal2-container {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+  }
+}
+
+/* Prevenir scroll del body cuando el modal está abierto */
+body.swal2-shown {
+  overflow: hidden !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
+/* Asegurar que el input sea visible en pantallas pequeñas */
+@media (max-height: 600px) {
+  .swal2-mobile-popup {
+    padding: 1rem !important;
+  }
+
+  .swal2-mobile-popup .swal2-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .swal2-mobile-popup .swal2-input {
+    margin: 0.5rem auto !important;
+  }
+}
