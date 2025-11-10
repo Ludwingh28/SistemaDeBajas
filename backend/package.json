@@ -10,13 +10,19 @@
     "type": "git",
     "url": "git+https://github.com/Ludwingh28/SistemaDeBajas.git"
   },
+  "keywords": [
+    "express",
+    "excel",
+    "clientes"
+  ],
   "license": "ISC",
   "author": "Ludwing Julian Herrera Justiniano",
-  "type": "commonjs",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node --max-old-space-size=12288 index.js",
+    "dev": "node --max-old-space-size=12288 node_modules/nodemon/bin/nodemon.js index.js",
+    "generate-hash": "node scripts/generateHash.js"
   },
   "dependencies": {
     "bcryptjs": "3.0.3",
@@ -33,6 +39,10 @@
     "uuid": "13.0.0"
   },
   "devDependencies": {
+    "@types/compression": "1.8.1",
+    "@types/cors": "2.8.19",
+    "@types/express": "5.0.5",
+    "@types/morgan": "1.9.10",
     "nodemon": "3.1.10"
   }
 }

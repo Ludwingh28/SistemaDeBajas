@@ -169,7 +169,7 @@ const FormularioBaja = () => {
             name="codigoCliente"
             value={formData.codigoCliente}
             onChange={handleInputChange}
-            placeholder="Ej: CLT-12345"
+            placeholder="Ej: 420568"
             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg 
                      focus:border-blue-500 focus:outline-none transition-colors
                      text-gray-800 placeholder-gray-400"
