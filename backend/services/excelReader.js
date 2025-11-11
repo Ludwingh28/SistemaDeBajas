@@ -3,82 +3,93 @@ import fs from "fs/promises";
 import { paths, setCachedData, getCachedData, cacheConfig } from "../config/database.js";
 
 /**
- * Leer Excel optimizado para archivos grandes
+ * Leer Excel optimizado para archivos grandes usando streaming
  * Solo extrae las columnas necesarias
  */
 export const readExcelFileOptimized = async (filePath, sheetName, headerRow, columnasNecesarias = null) => {
   try {
-    console.log(`📖 Leyendo: ${sheetName} (modo optimizado)...`);
+    console.log(`📖 Leyendo: ${sheetName || "primera hoja"} (modo streaming)...`);
 
-    const workbook = new ExcelJS.Workbook();
-
-    // Opción de lectura con streaming para archivos grandes
-    const options = {
+    const workbook = new ExcelJS.stream.xlsx.WorkbookReader(filePath, {
       sharedStrings: "cache",
       hyperlinks: "ignore",
-      styles: "ignore",
-    };
+      worksheets: "emit",
+      entries: "emit",
+    });
 
-    await workbook.xlsx.readFile(filePath, options);
+    const data = [];
+    let headers = [];
+    let rowNumber = 0;
+    let count = 0;
+    let targetSheetFound = false;
 
-    const worksheet = sheetName ? workbook.getWorksheet(sheetName) : workbook.worksheets[0];
+    for await (const worksheetReader of workbook) {
+      // Si se especificó un nombre de hoja, verificar si es la correcta
+      if (sheetName && worksheetReader.name !== sheetName) {
+        continue;
+      }
 
-    if (!worksheet) {
+      targetSheetFound = true;
+
+      for await (const row of worksheetReader) {
+        rowNumber++;
+
+        // Leer headers
+        if (rowNumber === headerRow) {
+          headers = row.values || [];
+          headers = headers.map((h) => h?.toString().trim() || "");
+          console.log(
+            `   📋 Headers encontrados: ${headers
+              .filter((h) => h)
+              .slice(1, 10)
+              .join(", ")}...`
+          );
+          continue;
+        }
+
+        // Procesar filas de datos
+        if (rowNumber > headerRow) {
+          const rowData = {};
+          let hasData = false;
+          const values = row.values || [];
+
+          values.forEach((cellValue, colNumber) => {
+            const header = headers[colNumber];
+
+            // Si se especificaron columnas necesarias, solo extraer esas
+            if (columnasNecesarias && !columnasNecesarias.includes(header)) {
+              return;
+            }
+
+            if (header) {
+              rowData[header] = cellValue;
+              if (cellValue !== null && cellValue !== undefined && cellValue !== "") {
+                hasData = true;
+              }
+            }
+          });
+
+          if (hasData) {
+            data.push(rowData);
+            count++;
+
+            // Log cada 5000 filas para ver progreso
+            if (count % 5000 === 0) {
+              console.log(`   ⏳ Procesadas ${count} filas...`);
+            }
+          }
+        }
+      }
+
+      // Si encontramos la hoja que buscábamos, salir
+      break;
+    }
+
+    if (sheetName && !targetSheetFound) {
       throw new Error(`Hoja ${sheetName} no encontrada`);
     }
 
-    const data = [];
-    const headers = [];
-    const headerRowObj = worksheet.getRow(headerRow);
-
-    // Leer headers
-    headerRowObj.eachCell((cell, colNumber) => {
-      headers[colNumber] = cell.value?.toString().trim() || `Column${colNumber}`;
-    });
-
-    console.log(
-      `   📋 Headers encontrados: ${headers
-        .filter((h) => h)
-        .slice(1, 10)
-        .join(", ")}...`
-    );
-
-    // Leer datos fila por fila
-    let count = 0;
-    worksheet.eachRow((row, rowNumber) => {
-      if (rowNumber <= headerRow) return;
-
-      const rowData = {};
-      let hasData = false;
-
-      row.eachCell((cell, colNumber) => {
-        const header = headers[colNumber];
-
-        // Si se especificaron columnas necesarias, solo extraer esas
-        if (columnasNecesarias && !columnasNecesarias.includes(header)) {
-          return;
-        }
-
-        if (header) {
-          rowData[header] = cell.value;
-          if (cell.value !== null && cell.value !== undefined) {
-            hasData = true;
-          }
-        }
-      });
-
-      if (hasData) {
-        data.push(rowData);
-        count++;
-
-        // Log cada 5000 filas para ver progreso
-        if (count % 5000 === 0) {
-          console.log(`   ⏳ Procesadas ${count} filas...`);
-        }
-      }
-    });
-
-    console.log(`   ✅ ${sheetName}: ${data.length} registros cargados`);
+    console.log(`   ✅ ${sheetName || "archivo"}: ${data.length} registros cargados`);
     return data;
   } catch (error) {
     console.error(`❌ Error leyendo ${filePath}:`, error.message);
@@ -101,7 +112,7 @@ export const readMotivosFile = async () => {
     return motivos;
   } catch (error) {
     console.error("❌ Error leyendo motivos.txt:", error.message);
-    return ["Cierre definitivo", "No cumple requisitos", "Deuda pendiente", "Cambio de giro", "Solicitud del cliente", "Duplicado", "No existe", "Otro"];
+    return ["Cierre Definitivo", "Cambio de rubro", "Cambio de Dueño", "Duplicado", "Mal punteado", "Mudanza", "No hay negocio", "No hay negocio con ese nombre", "Tienda en Alquiler", "Otro"];
   }
 };
 
@@ -117,7 +128,7 @@ export const loadExcelDataOnStartup = async () => {
     const ventasData = await readExcelFileOptimized(
       paths.excelVentas,
       "VentasPOD",
-      7,
+      4,
       ["No.Venta", "Fecha", "Cliente", "Nombre Cliente"] // Solo estas columnas
     );
     setCachedData("VENTAS_POD_KEY", ventasData);
@@ -127,7 +138,7 @@ export const loadExcelDataOnStartup = async () => {
     const clientesData = await readExcelFileOptimized(
       paths.excelVentas,
       "clientes",
-      8,
+      5,
       ["CODIGO", "NOMBRE", "RUTA", "ZONA", "ACTIVO"] // Solo estas columnas
     );
     setCachedData("CLIENTES_KEY", clientesData);
