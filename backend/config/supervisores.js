@@ -1,4 +1,8 @@
 import bcrypt from "bcryptjs";
+import dotenv from "dotenv";
+
+// Cargar variables de entorno
+dotenv.config();
 
 // Códigos de supervisores (hasheados)
 // Los códigos se cargan desde las variables de entorno

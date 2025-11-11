@@ -18,8 +18,8 @@ export const paths = {
   logs: path.join(__dirname, "..", "logs"),
 
   // Archivos específicos
-  excelVentas: path.join(__dirname, "..", "data", process.env.EXCEL_VENTAS || "ventas nuevito.xlsx"),
-  excelRutas: path.join(__dirname, "..", "data", process.env.EXCEL_RUTAS || "rutas vendedores.xlsx"),
+  excelVentas: path.join(__dirname, "..", "data", process.env.EXCEL_VENTAS || "ventas_nuevito.xlsx"),
+  excelRutas: path.join(__dirname, "..", "data", process.env.EXCEL_RUTAS || "rutas_vendedores.xlsx"),
   motivosFile: path.join(__dirname, "..", "data", process.env.MOTIVOS_FILE || "motivos.txt"),
   solicitudesLog: path.join(__dirname, "..", "logs", "solicitudes.json"),
   reporteDisqualification: path.join(__dirname, "..", "reportes", "disqualification report.xlsx"),

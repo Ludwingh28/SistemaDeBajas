@@ -32,10 +32,14 @@ dist-ssr
 
 #files ignored for security reasons
 /data/*.xlsx
-./data/*.xls
-./data/*.csv
-./data/*.db
-./uploads/*
+/data/*.xls
+/data/*.csv
+/data/*.db
+/uploads/*.png
+/uploads/*.jpg
 !uploads/.gitkeep
-./reportes/*
+./reportes/*.xlsx
+./reportes/*.xls
+./reportes/*.csv
+./reportes/*.db
 !reportes/.gitkeep

@@ -22,7 +22,7 @@ app.use(morgan("dev"));
 // CORS - Permitir requests del frontend
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://zrdv0p9h-5173.brs.devtunnels.ms/",
+    origin: process.env.FRONTEND_URL || "http://localhost:5173/",
     credentials: true,
   })
 );

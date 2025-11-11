@@ -25,36 +25,103 @@ export const showLoadingAlert = () => {
   });
 };
 
-// Success - Cliente puede ser inhabilitado
-export const showSuccessAlert = (codigoCliente, motivo) => {
+// ESTADO 1: Cliente SÍ puede ser inhabilitado
+export const showSuccessAlert = (codigoCliente, nombreCliente, motivo, razon) => {
   return Swal.fire({
     icon: "success",
     title: "✅ Cliente puede ser inhabilitado",
     html: `
-      <div class="text-left space-y-2">
-        <p class="text-gray-700"><strong>Código:</strong> ${codigoCliente}</p>
-        <p class="text-gray-700"><strong>Motivo:</strong> ${motivo}</p>
-        <p class="text-green-600 mt-4">La solicitud ha sido registrada correctamente.</p>
+      <div class="text-left space-y-3 p-4">
+        <div class="bg-green-50 p-3 rounded-lg border border-green-200">
+          <p class="text-gray-700"><strong>Código:</strong> ${codigoCliente}</p>
+          <p class="text-gray-700"><strong>Cliente:</strong> ${nombreCliente}</p>
+          <p class="text-gray-700"><strong>Motivo:</strong> ${motivo}</p>
+        </div>
+        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <p class="text-sm text-gray-600"><strong>Razón:</strong></p>
+          <p class="text-gray-700">${razon}</p>
+        </div>
+        <p class="text-green-600 font-medium text-center mt-4">
+          ✓ La solicitud ha sido registrada correctamente
+        </p>
       </div>
     `,
     confirmButtonText: "Entendido",
+    width: "600px",
     ...baseConfig,
   });
 };
 
-// Error - Cliente NO puede ser inhabilitado
-export const showErrorAlert = (codigoCliente, razon) => {
+// ESTADO 2: Cliente NO puede ser inhabilitado
+export const showErrorAlert = (codigoCliente, nombreCliente, motivo, razon) => {
   return Swal.fire({
     icon: "error",
     title: "❌ Cliente NO puede ser inhabilitado",
     html: `
-      <div class="text-left space-y-2">
-        <p class="text-gray-700"><strong>Código:</strong> ${codigoCliente}</p>
-        <p class="text-red-600 mt-4"><strong>Razón:</strong></p>
-        <p class="text-gray-600">${razon}</p>
+      <div class="text-left space-y-3 p-4">
+        <div class="bg-red-50 p-3 rounded-lg border border-red-200">
+          <p class="text-gray-700"><strong>Código:</strong> ${codigoCliente}</p>
+          <p class="text-gray-700"><strong>Cliente:</strong> ${nombreCliente}</p>
+          <p class="text-gray-700"><strong>Motivo solicitado:</strong> ${motivo}</p>
+        </div>
+        <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+          <p class="text-sm text-gray-600"><strong>Razón del rechazo:</strong></p>
+          <p class="text-gray-700 font-medium">${razon}</p>
+        </div>
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <p class="text-sm text-gray-600"><strong>¿Qué significa esto?</strong></p>
+          <p class="text-gray-700 text-sm">El cliente tiene actividad comercial reciente. No es posible procesar la inhabilitación en este momento.</p>
+        </div>
       </div>
     `,
     confirmButtonText: "Entendido",
+    width: "600px",
+    ...baseConfig,
+  });
+};
+
+// ESTADO 3: Derivado a revisión manual (caso DUPLICADO con ventas recientes)
+export const showManualReviewAlert = (codigoCliente, nombreCliente, motivo, razon, instrucciones) => {
+  const instruccionesList = instrucciones?.map((inst) => `<li class="mb-2">${inst}</li>`).join("") || "";
+
+  return Swal.fire({
+    icon: "warning",
+    title: "⚠️ Derivado a Revisión Manual",
+    html: `
+      <div class="text-left space-y-3 p-4">
+        <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+          <p class="text-gray-700"><strong>Código:</strong> ${codigoCliente}</p>
+          <p class="text-gray-700"><strong>Cliente:</strong> ${nombreCliente}</p>
+          <p class="text-gray-700"><strong>Motivo:</strong> ${motivo}</p>
+        </div>
+        
+        <div class="bg-orange-50 p-3 rounded-lg border border-orange-200">
+          <p class="text-sm text-gray-600"><strong>Estado:</strong></p>
+          <p class="text-orange-700 font-medium">Derivado a revisión manual con Inteligencia Comercial</p>
+        </div>
+
+        <div class="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <p class="text-sm text-gray-600 mb-2"><strong>Información:</strong></p>
+          <p class="text-gray-700 text-sm">${razon}</p>
+        </div>
+
+        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <p class="text-sm font-semibold text-gray-700 mb-2">📋 Próximos pasos:</p>
+          <ol class="text-sm text-gray-600 list-decimal list-inside space-y-1">
+            ${instruccionesList}
+          </ol>
+        </div>
+
+        <div class="text-center mt-4 p-3 bg-indigo-50 rounded-lg border border-indigo-200">
+          <p class="text-sm text-indigo-700 font-medium">
+            💡 Tu solicitud ha sido registrada y será revisada por el equipo especializado
+          </p>
+        </div>
+      </div>
+    `,
+    confirmButtonText: "Entendido",
+    confirmButtonColor: "#f59e0b",
+    width: "650px",
     ...baseConfig,
   });
 };
@@ -81,7 +148,7 @@ export const showValidationError = (mensaje) => {
   });
 };
 
-// Confirmación de código supervisor - CORREGIDO PARA MÓVILES
+// Confirmación de código supervisor
 export const showSupervisorPrompt = async () => {
   const { value: codigo } = await Swal.fire({
     title: "Código de Supervisor",
@@ -91,28 +158,23 @@ export const showSupervisorPrompt = async () => {
     showCancelButton: true,
     confirmButtonText: "Verificar",
     cancelButtonText: "Cancelar",
-    // FIX: Configuración para móviles
     position: "center",
-    heightAuto: false, // CRÍTICO: Previene que el modal se mueva con el teclado
-    scrollbarPadding: false, // Previene padding extra
-    // Validación
+    heightAuto: false,
+    scrollbarPadding: false,
     inputValidator: (value) => {
       if (!value) {
         return "Debes ingresar un código";
       }
     },
-    // Estilos personalizados para mejor visualización móvil
     customClass: {
       ...baseConfig.customClass,
       container: "swal2-mobile-container",
       popup: "swal2-mobile-popup rounded-2xl",
     },
     didOpen: () => {
-      // Asegurar que el input esté visible en móviles
       const input = Swal.getInput();
       if (input) {
-        input.style.fontSize = "16px"; // Previene zoom en iOS
-        // Opcional: Auto-focus con delay para móviles
+        input.style.fontSize = "16px";
         setTimeout(() => {
           input.focus();
         }, 300);
