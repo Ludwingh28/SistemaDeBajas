@@ -17,10 +17,10 @@ body {
 input,
 select,
 textarea {
-  font-size: 16px !important; /* Previene zoom en iOS */
+  font-size: 16px !important;
 }
 
-/* FIX: Modal de supervisor en móviles */
+/* Modal de supervisor en móviles */
 .swal2-mobile-container {
   padding: 10px !important;
 }
@@ -30,9 +30,7 @@ textarea {
   max-width: 90vw !important;
 }
 
-/* Asegurar que el modal no se mueva con el teclado */
 @supports (-webkit-touch-callout: none) {
-  /* iOS Safari */
   .swal2-container {
     position: fixed !important;
     top: 0 !important;
@@ -40,14 +38,12 @@ textarea {
   }
 }
 
-/* Prevenir scroll del body cuando el modal está abierto */
 body.swal2-shown {
   overflow: hidden !important;
   position: fixed !important;
   width: 100% !important;
 }
 
-/* Asegurar que el input sea visible en pantallas pequeñas */
 @media (max-height: 600px) {
   .swal2-mobile-popup {
     padding: 1rem !important;
@@ -60,5 +56,130 @@ body.swal2-shown {
 
   .swal2-mobile-popup .swal2-input {
     margin: 0.5rem auto !important;
+  }
+}
+
+/* ========================================
+   PERSONALIZACIÓN DE DRIVER.JS
+   ======================================== */
+
+/* Overlay más oscuro */
+.driver-overlay {
+  background-color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Popover del tutorial */
+.driver-popover {
+  background: white !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+  max-width: 450px !important;
+}
+
+/* CRÍTICO: Centrar popovers sin elemento target */
+.driver-popover.driver-popover-custom:not([data-side]) {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Título del popover */
+.driver-popover-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #1e40af !important;
+  padding: 1rem 1rem 0.5rem !important;
+}
+
+/* Descripción */
+.driver-popover-description {
+  font-size: 0.95rem !important;
+  color: #374151 !important;
+  line-height: 1.6 !important;
+  padding: 0.5rem 1rem !important;
+}
+
+/* Botones */
+.driver-popover-navigation-btns {
+  padding: 1rem !important;
+  gap: 0.5rem !important;
+}
+
+.driver-popover-btn {
+  padding: 0.5rem 1.25rem !important;
+  border-radius: 0.5rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+  font-size: 0.9rem !important;
+}
+
+/* Botón Siguiente */
+.driver-popover-next-btn {
+  background: linear-gradient(to right, #2563eb, #1d4ed8) !important;
+  color: rgba(255, 255, 255, 0) !important;
+  border: none !important;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3) !important;
+}
+
+.driver-popover-next-btn:hover {
+  background: linear-gradient(to right, #1d4ed8, #1e40af) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.4) !important;
+}
+
+/* Botón Anterior */
+.driver-popover-prev-btn {
+  background: white !important;
+  color: #4b5563 !important;
+  border: 2px solid #e5e7eb !important;
+}
+
+.driver-popover-prev-btn:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+/* Botón Cerrar */
+.driver-popover-close-btn {
+  background: white !important;
+  color: #ef4444 !important;
+  border: 2px solid #fee2e2 !important;
+}
+
+.driver-popover-close-btn:hover {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+/* Progreso */
+.driver-popover-progress-text {
+  font-size: 0.85rem !important;
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+}
+
+/* Flecha del popover */
+.driver-popover-arrow {
+  border-color: white !important;
+}
+
+/* Elemento resaltado */
+.driver-active-element {
+  border-radius: 8px !important;
+}
+
+/* Responsivo */
+@media (max-width: 640px) {
+  .driver-popover {
+    max-width: 90vw !important;
+  }
+
+  .driver-popover-title {
+    font-size: 1.1rem !important;
+  }
+
+  .driver-popover-description {
+    font-size: 0.9rem !important;
   }
 }

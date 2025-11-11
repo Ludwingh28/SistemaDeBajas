@@ -1,20 +1,20 @@
-import { Download } from "lucide-react";
+import { Download, HelpCircle } from "lucide-react";
 import Swal from "sweetalert2";
 import { showSupervisorPrompt, showLoadingAlert, showGeneralError } from "../utils/alerts";
 import { reportesAPI } from "../utils/api";
+import { iniciarTutorial } from "../utils/tutorial";
 
 const Navbar = () => {
   const handleDescargarReporte = async () => {
     const codigo = await showSupervisorPrompt();
 
-    if (!codigo) return; // Usuario canceló
+    if (!codigo) return;
 
     const loadingSwal = showLoadingAlert();
 
     try {
       const blob = await reportesAPI.descargar(codigo);
 
-      // Crear link de descarga
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -65,18 +65,35 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Botón Supervisor */}
-          <button
-            onClick={handleDescargarReporte}
-            className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg 
-                       flex items-center space-x-2 transition-all duration-200 
-                       shadow-md hover:shadow-lg active:scale-95"
-            aria-label="Descargar reporte (solo supervisores)"
-          >
-            <Download className="w-5 h-5" />
-            <span className="hidden sm:inline">Descargar Reporte</span>
-            <span className="sm:hidden">Reporte</span>
-          </button>
+          {/* Botones */}
+          <div className="flex items-center space-x-3">
+            {/* Botón de Ayuda */}
+            <button
+              onClick={iniciarTutorial}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg 
+                         flex items-center space-x-2 transition-all duration-200 
+                         shadow-md hover:shadow-lg active:scale-95"
+              aria-label="Ver tutorial"
+              title="Ver tutorial del sistema"
+            >
+              <HelpCircle className="w-5 h-5" />
+              <span className="hidden sm:inline">Ayuda</span>
+            </button>
+
+            {/* Botón Supervisor */}
+            <button
+              onClick={handleDescargarReporte}
+              className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg 
+                         flex items-center space-x-2 transition-all duration-200 
+                         shadow-md hover:shadow-lg active:scale-95"
+              aria-label="Descargar reporte (solo supervisores)"
+              title="Descargar reporte de bajas"
+            >
+              <Download className="w-5 h-5" />
+              <span className="hidden sm:inline">Descargar Reporte</span>
+              <span className="sm:hidden">Reporte</span>
+            </button>
+          </div>
         </div>
       </div>
     </nav>
