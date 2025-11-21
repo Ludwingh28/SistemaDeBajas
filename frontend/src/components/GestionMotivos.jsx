@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowLeft, Plus, Tag } from "lucide-react";
+import { ArrowLeft, Plus, Tag, Edit2, ToggleLeft, ToggleRight } from "lucide-react";
 import axios from "axios";
 import Swal from "sweetalert2";
 
@@ -7,6 +7,7 @@ const GestionMotivos = ({ onBack }) => {
   const [motivos, setMotivos] = useState([]);
   const [nuevoMotivo, setNuevoMotivo] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [motivoEditando, setMotivoEditando] = useState(null);
 
   useEffect(() => {
     cargarMotivos();
@@ -66,6 +67,82 @@ const GestionMotivos = ({ onBack }) => {
     }
   };
 
+  const editarMotivo = async (index, motivoActual) => {
+    const { value: nuevoNombre } = await Swal.fire({
+      title: "Editar Motivo",
+      input: "text",
+      inputLabel: "Nuevo nombre del motivo",
+      inputValue: motivoActual,
+      showCancelButton: true,
+      confirmButtonText: "Guardar",
+      cancelButtonText: "Cancelar",
+      inputValidator: (value) => {
+        if (!value) {
+          return "El motivo no puede estar vacío";
+        }
+      },
+    });
+
+    if (nuevoNombre && nuevoNombre !== motivoActual) {
+      try {
+        await axios.put(`http://localhost:3001/api/motivos/${index}`, {
+          nombre: nuevoNombre.trim(),
+        });
+
+        Swal.fire({
+          icon: "success",
+          title: "¡Actualizado!",
+          text: "Motivo actualizado correctamente",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        cargarMotivos();
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.error || "No se pudo actualizar el motivo",
+        });
+      }
+    }
+  };
+
+  const toggleActivoMotivo = async (index, motivoNombre, estaActivo) => {
+    const accion = estaActivo ? "inhabilitar" : "activar";
+    const result = await Swal.fire({
+      title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} motivo?`,
+      text: `¿Estás seguro de que deseas ${accion} "${motivoNombre}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: `Sí, ${accion}`,
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const endpoint = estaActivo ? "desactivar" : "activar";
+        await axios.patch(`http://localhost:3001/api/motivos/${index}/${endpoint}`);
+
+        Swal.fire({
+          icon: "success",
+          title: "¡Éxito!",
+          text: `Motivo ${accion}do correctamente`,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        cargarMotivos();
+      } catch (error) {
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: error.response?.data?.error || `No se pudo ${accion} el motivo`,
+        });
+      }
+    }
+  };
+
   return (
     <div>
       {/* Header con botón volver */}
@@ -74,15 +151,15 @@ const GestionMotivos = ({ onBack }) => {
         Volver al Menú
       </button>
 
-      <div className="bg-white rounded-2xl shadow-lg p-8">
+      <div className="bg-white rounded-2xl shadow-lg p-4 md:p-8">
         {/* Title */}
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-purple-100 p-3 rounded-xl">
             <Tag className="w-6 h-6 text-purple-600" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Gestión de Motivos</h2>
-            <p className="text-gray-600 text-sm">Administra los motivos de baja de clientes</p>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Gestión de Motivos</h2>
+            <p className="text-gray-600 text-xs md:text-sm">Administra los motivos de baja de clientes</p>
           </div>
         </div>
 
@@ -97,25 +174,25 @@ const GestionMotivos = ({ onBack }) => {
         {/* Form agregar */}
         <form onSubmit={agregarMotivo} className="mb-8">
           <label className="block text-sm font-semibold text-gray-700 mb-2">Agregar Nuevo Motivo</label>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={nuevoMotivo}
               onChange={(e) => setNuevoMotivo(e.target.value)}
               placeholder="Ejemplo: Cliente sin actividad comercial"
               className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg
-                       focus:border-purple-500 focus:outline-none transition-colors"
+                       focus:border-purple-500 focus:outline-none transition-colors text-sm md:text-base"
               disabled={isLoading}
               maxLength={255}
             />
             <button
               type="submit"
               disabled={isLoading}
-              className={`px-6 py-3 rounded-lg font-semibold text-white flex items-center gap-2
+              className={`w-full sm:w-auto px-4 md:px-6 py-3 rounded-lg font-semibold text-white flex items-center justify-center gap-2
                 ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-purple-600 hover:bg-purple-700 active:scale-95"} transition-all`}
             >
               <Plus className="w-5 h-5" />
-              {isLoading ? "Agregando..." : "Agregar"}
+              <span className="whitespace-nowrap">{isLoading ? "Agregando..." : "Agregar"}</span>
             </button>
           </div>
         </form>
@@ -131,12 +208,38 @@ const GestionMotivos = ({ onBack }) => {
           ) : (
             <div className="space-y-3">
               {motivos.map((motivo, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-purple-100 w-8 h-8 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm">{index + 1}</div>
-                    <span className="text-gray-800 font-medium">{motivo}</span>
+                <div
+                  key={index}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="bg-purple-100 w-8 h-8 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm flex-shrink-0">
+                      {index + 1}
+                    </div>
+                    <span className="text-gray-800 font-medium break-words">{motivo}</span>
                   </div>
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
+
+                    {/* Botón Editar */}
+                    <button
+                      onClick={() => editarMotivo(index, motivo)}
+                      className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+                      title="Editar motivo"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+
+                    {/* Botón Inhabilitar */}
+                    <button
+                      onClick={() => toggleActivoMotivo(index, motivo, true)}
+                      className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors"
+                      title="Inhabilitar motivo"
+                    >
+                      <ToggleRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

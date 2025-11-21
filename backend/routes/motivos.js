@@ -76,4 +76,77 @@ router.post("/agregar", async (req, res, next) => {
   }
 });
 
+/**
+ * PUT /api/motivos/:id
+ * Actualizar nombre de un motivo
+ */
+router.put("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { nombre } = req.body;
+
+    if (!nombre || nombre.trim().length === 0) {
+      return res.status(400).json({
+        error: "El nombre del motivo no puede estar vacío",
+      });
+    }
+
+    // Actualizar motivo
+    await Motivo.update(parseInt(id) + 1, nombre.trim()); // +1 porque el index viene de 0
+
+    res.json({
+      message: "Motivo actualizado exitosamente",
+      motivo: nombre.trim(),
+    });
+  } catch (error) {
+    console.error("❌ Error actualizando motivo:", error);
+
+    if (error.message === "El motivo ya existe") {
+      return res.status(400).json({
+        error: "Ya existe un motivo con ese nombre",
+      });
+    }
+
+    next(error);
+  }
+});
+
+/**
+ * PATCH /api/motivos/:id/desactivar
+ * Desactivar (inhabilitar) un motivo
+ */
+router.patch("/:id/desactivar", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    await Motivo.deactivate(parseInt(id) + 1); // +1 porque el index viene de 0
+
+    res.json({
+      message: "Motivo desactivado exitosamente",
+    });
+  } catch (error) {
+    console.error("❌ Error desactivando motivo:", error);
+    next(error);
+  }
+});
+
+/**
+ * PATCH /api/motivos/:id/activar
+ * Activar un motivo previamente desactivado
+ */
+router.patch("/:id/activar", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    await Motivo.activate(parseInt(id) + 1); // +1 porque el index viene de 0
+
+    res.json({
+      message: "Motivo activado exitosamente",
+    });
+  } catch (error) {
+    console.error("❌ Error activando motivo:", error);
+    next(error);
+  }
+});
+
 export default router;
