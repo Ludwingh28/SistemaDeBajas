@@ -8,6 +8,7 @@ import routes from "./routes/index.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { loadExcelDataOnStartup } from "./services/excelReader.js";
 import { verificarConexion } from "./config/mysql.js";
+import { iniciarScheduler, detenerScheduler } from "./config/scheduler.js";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -61,7 +62,12 @@ async function startServer() {
     // 2. Cargar datos de Excel
     await loadExcelDataOnStartup();
 
-    // 3. Iniciar servidor
+    // 3. Iniciar scheduler de sincronizaciones (6 AM y 7 PM)
+    if (mysqlOk) {
+      iniciarScheduler();
+    }
+
+    // 4. Iniciar servidor
     app.listen(PORT, "0.0.0.0", () => {
       console.log("╔════════════════════════════════════════╗");
       console.log("║   🚀 Servidor Backend Iniciado        ║");
@@ -72,6 +78,7 @@ async function startServer() {
       console.log(`✅ Excel cargados en memoria`);
       if (mysqlOk) {
         console.log(`✅ MySQL conectado`);
+        console.log(`✅ Scheduler activo (sync: 6 AM y 7 PM)`);
       }
       console.log("════════════════════════════════════════\n");
     });
@@ -87,11 +94,13 @@ startServer();
 // Manejo de cierre graceful
 process.on("SIGTERM", () => {
   console.log("⚠️  SIGTERM recibido, cerrando servidor...");
+  detenerScheduler();
   process.exit(0);
 });
 
 process.on("SIGINT", () => {
   console.log("\n⚠️  SIGINT recibido, cerrando servidor...");
+  detenerScheduler();
   process.exit(0);
 });
 

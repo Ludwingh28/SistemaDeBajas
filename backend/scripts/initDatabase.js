@@ -115,6 +115,43 @@ async function initDatabase() {
     `);
     console.log('✓ Tabla "reportes" creada');
 
+    // Crear tabla de planificación de rutas
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS planificacion_rutas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        ruta VARCHAR(100) NOT NULL UNIQUE,
+        zona VARCHAR(100) NOT NULL,
+        dia VARCHAR(10) NOT NULL,
+        vendedor VARCHAR(255) DEFAULT '',
+        fecha_sincronizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_ruta (ruta),
+        INDEX idx_zona (zona),
+        INDEX idx_dia (dia),
+        INDEX idx_vendedor (vendedor),
+        INDEX idx_fecha_sincronizacion (fecha_sincronizacion)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✓ Tabla "planificacion_rutas" creada');
+
+    // Crear tabla de logs de sincronización
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS sync_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        tipo_sync ENUM('INITIAL', 'UPDATE') NOT NULL,
+        registros_insertados INT DEFAULT 0,
+        registros_actualizados INT DEFAULT 0,
+        registros_sin_cambios INT DEFAULT 0,
+        estado ENUM('SUCCESS', 'ERROR') NOT NULL,
+        mensaje TEXT,
+        fecha_sync TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_fecha_sync (fecha_sync),
+        INDEX idx_tipo_sync (tipo_sync),
+        INDEX idx_estado (estado)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✓ Tabla "sync_log" creada');
+
     // Insertar motivos iniciales
     console.log('\n📝 Insertando motivos iniciales...');
     for (const motivo of MOTIVOS_INICIALES) {
