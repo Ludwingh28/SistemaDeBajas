@@ -29,6 +29,13 @@ export const cacheConfig = {
   MOTIVOS_KEY: "motivos_data",
 };
 
+// Cache keys para diferentes tipos de datos
+export const cacheKeys = {
+  MOTIVOS: "motivos_data",
+  RUTAS: "rutas_vendedores_data",
+  VENTAS: "ventas_data",
+};
+
 export const getCachedData = (key) => cache.get(key);
 export const setCachedData = (key, data) => cache.set(key, data);
 export const clearCache = () => cache.flushAll();
