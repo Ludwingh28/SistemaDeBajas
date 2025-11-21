@@ -12,7 +12,7 @@ const router = express.Router();
 const upload = multer({
   dest: 'uploads/temp/',
   limits: {
-    fileSize: 50 * 1024 * 1024 // 50MB max
+    fileSize: 200 * 1024 * 1024 // 200MB max (aumentado para archivos grandes)
   },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();

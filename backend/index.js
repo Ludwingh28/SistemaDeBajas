@@ -59,8 +59,14 @@ async function startServer() {
       console.warn("⚠️  MySQL no disponible. El sistema continuará pero sin persistencia en BD.");
     }
 
-    // 2. Cargar datos de Excel
-    await loadExcelDataOnStartup();
+    // 2. Cargar solo datos necesarios en cache (skip ventas/clientes si hay MySQL)
+    if (mysqlOk) {
+      console.log("✅ MySQL disponible - Ventas y Clientes se consultan desde DB");
+      console.log("⏭️  Skipping carga de Excel a memoria (optimización)");
+    } else {
+      console.warn("⚠️  MySQL no disponible - Cargando Excel a memoria como fallback");
+      await loadExcelDataOnStartup();
+    }
 
     // 3. Iniciar scheduler de sincronizaciones (6 AM y 7 PM)
     if (mysqlOk) {
@@ -75,10 +81,12 @@ async function startServer() {
       console.log(`📍 Puerto: ${PORT}`);
       console.log(`🌍 Entorno: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 URL Local: http://localhost:${PORT}`);
-      console.log(`✅ Excel cargados en memoria`);
       if (mysqlOk) {
         console.log(`✅ MySQL conectado`);
+        console.log(`✅ Consultas directo desde DB (optimizado)`);
         console.log(`✅ Scheduler activo (sync: 6 AM y 7 PM)`);
+      } else {
+        console.log(`⚠️  Modo fallback con Excel en memoria`);
       }
       console.log("════════════════════════════════════════\n");
     });
