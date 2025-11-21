@@ -34,7 +34,7 @@ export const notFoundHandler = (req, res, next) => {
   next(error);
 };
 
-// Helper para crear errores personalizados
+// Clase de error personalizado para la aplicación
 export class AppError extends Error {
   constructor(message, statusCode = 500, details = null) {
     super(message);
@@ -44,3 +44,6 @@ export class AppError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
+// Export por defecto para compatibilidad
+export default { errorHandler, notFoundHandler, AppError };
