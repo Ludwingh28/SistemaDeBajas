@@ -6,6 +6,7 @@ import { validarCliente } from "../services/validator.js";
 import { agregarSolicitudAlReporte } from "../services/reportGenerator.js";
 import { logSolicitud } from "../logs/logger.js";
 import { AppError } from "../middleware/errorHandler.js";
+import Reporte from "../models/Reporte.js";
 
 const router = express.Router();
 
@@ -40,13 +41,33 @@ router.post(
       // 1. Validar cliente
       const resultado = validarCliente(codigoCliente, motivo);
 
-      // 2. Agregar al reporte de supervisores
+      // 2. Agregar al reporte de supervisores (Excel)
       await agregarSolicitudAlReporte(resultado);
 
-      // 3. Guardar log de la solicitud
+      // 3. Guardar en base de datos MySQL (histórico)
+      try {
+        const fotosRutas = req.files ? req.files.map(f => f.path) : [];
+        await Reporte.create({
+          codigoCliente: resultado.codigoCliente,
+          nombreCliente: resultado.nombreCliente,
+          motivo: motivo,
+          zona: resultado.zona || null,
+          ruta: resultado.ruta || null,
+          vendedor: resultado.vendedor || null,
+          resultado: resultado.resultado,
+          razon: resultado.razon,
+          fotosRutas: fotosRutas
+        });
+        console.log('✓ Reporte guardado en MySQL');
+      } catch (dbError) {
+        console.error('⚠️  Error guardando en MySQL (continuando...):', dbError.message);
+        // No interrumpir el proceso si falla MySQL
+      }
+
+      // 4. Guardar log de la solicitud
       await logSolicitud(resultado, req.ip);
 
-      // 4. Determinar respuesta según resultado
+      // 5. Determinar respuesta según resultado
       let responseData;
 
       if (resultado.resultado === "SI") {
@@ -113,20 +134,19 @@ router.post(
 
 /**
  * GET /api/bajas/estadisticas
- * Obtener estadísticas del día (opcional - para dashboard)
+ * Obtener estadísticas del día desde MySQL
  */
 router.get("/estadisticas", async (req, res, next) => {
   try {
-    const { getEstadisticasLogs } = await import("../logs/logger.js");
-    const { getEstadisticasReporte } = await import("../services/reportGenerator.js");
-
-    const [statsLogs, statsReporte] = await Promise.all([getEstadisticasLogs(), getEstadisticasReporte()]);
+    // Obtener estadísticas de hoy desde MySQL
+    const statsMySQL = await Reporte.getEstadisticasHoy();
 
     res.json({
-      logs: statsLogs,
-      reporte: statsReporte,
+      fecha: new Date().toISOString().split('T')[0],
+      ...statsMySQL
     });
   } catch (error) {
+    console.error("Error obteniendo estadísticas:", error);
     next(error);
   }
 });

@@ -1,15 +1,15 @@
 import express from "express";
-import { getCachedMotivos } from "../services/excelReader.js";
+import Motivo from "../models/Motivo.js";
 
 const router = express.Router();
 
 /**
  * GET /api/motivos
- * Obtener lista de motivos disponibles
+ * Obtener lista de motivos disponibles desde MySQL
  */
-router.get("/", (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const motivos = getCachedMotivos();
+    const motivos = await Motivo.getAll();
 
     if (!motivos || motivos.length === 0) {
       return res.status(500).json({
@@ -17,9 +17,12 @@ router.get("/", (req, res, next) => {
       });
     }
 
+    // Retornar solo los nombres de motivos (formato compatible con el frontend)
+    const nombresMotivos = motivos.map(m => m.nombre);
+
     res.json({
-      motivos: motivos,
-      total: motivos.length,
+      motivos: nombresMotivos,
+      total: nombresMotivos.length,
     });
   } catch (error) {
     console.error("❌ Error obteniendo motivos:", error);
@@ -28,8 +31,8 @@ router.get("/", (req, res, next) => {
 });
 
 /**
- * POST /api/motivos/agregar (Opcional - para administradores)
- * Agregar un nuevo motivo dinámicamente
+ * POST /api/motivos/agregar
+ * Agregar un nuevo motivo a la base de datos
  */
 router.post("/agregar", async (req, res, next) => {
   try {
@@ -41,40 +44,34 @@ router.post("/agregar", async (req, res, next) => {
       });
     }
 
-    const { paths } = await import("../config/database.js");
-    const fs = await import("fs/promises");
-
-    // Leer archivo actual
-    const content = await fs.readFile(paths.motivosFile, "utf-8");
-    const motivosActuales = content
-      .split("\n")
-      .map((m) => m.trim())
-      .filter((m) => m.length > 0);
-
     // Verificar si ya existe
-    if (motivosActuales.includes(motivo.trim())) {
+    const existe = await Motivo.existsByName(motivo.trim());
+    if (existe) {
       return res.status(400).json({
         error: "Este motivo ya existe",
       });
     }
 
-    // Agregar nuevo motivo
-    motivosActuales.push(motivo.trim());
+    // Crear nuevo motivo
+    const nuevoMotivo = await Motivo.create(motivo.trim());
 
-    // Guardar archivo
-    await fs.writeFile(paths.motivosFile, motivosActuales.join("\n"), "utf-8");
-
-    // Refrescar cache
-    const { refreshCache } = await import("../services/excelReader.js");
-    await refreshCache();
+    // Obtener total de motivos
+    const todosMotivos = await Motivo.getAll();
 
     res.json({
       message: "Motivo agregado exitosamente",
-      motivo: motivo.trim(),
-      totalMotivos: motivosActuales.length,
+      motivo: nuevoMotivo.nombre,
+      totalMotivos: todosMotivos.length,
     });
   } catch (error) {
     console.error("❌ Error agregando motivo:", error);
+
+    if (error.message === "El motivo ya existe") {
+      return res.status(400).json({
+        error: error.message,
+      });
+    }
+
     next(error);
   }
 });

@@ -32,6 +32,17 @@ const FormularioBaja = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // Si es el campo código, solo permitir números
+    if (name === "codigoCliente") {
+      const soloNumeros = value.replace(/[^0-9]/g, "");
+      setFormData((prev) => ({
+        ...prev,
+        [name]: soloNumeros,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -155,6 +166,11 @@ const FormularioBaja = () => {
       fotos: [],
     });
     setPreviews([]);
+    // Limpiar también el input de archivos
+    const fileInput = document.getElementById("fotos");
+    if (fileInput) {
+      fileInput.value = "";
+    }
   };
 
   return (
@@ -244,8 +260,8 @@ const FormularioBaja = () => {
                     type="button"
                     onClick={() => removePhoto(index)}
                     className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full
-                             opacity-0 group-hover:opacity-100 transition-opacity
-                             hover:bg-red-600 active:scale-90"
+                             opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity
+                             hover:bg-red-600 active:scale-90 shadow-lg"
                     aria-label="Eliminar foto"
                   >
                     <X className="w-4 h-4" />

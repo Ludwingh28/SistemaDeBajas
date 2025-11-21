@@ -143,15 +143,38 @@ export const loadExcelDataOnStartup = async () => {
     );
     setCachedData("CLIENTES_KEY", clientesData);
 
-    // 3. Rutas vendedores
+    // 3. Rutas vendedores - Intentar desde Google Sheets primero
     console.log("📊 Cargando Rutas...");
-    const rutasData = await readExcelFileOptimized(
-      paths.excelRutas,
-      null,
-      1,
-      ["RUTA", "ZONA", "DIA", "VENDEDOR"] // Solo estas columnas
-    );
-    setCachedData("RUTAS_KEY", rutasData);
+    let rutasData;
+    const googleSheetUrl = process.env.GOOGLE_SHEET_URL;
+
+    if (googleSheetUrl && googleSheetUrl.trim() !== '') {
+      try {
+        console.log("   🌐 Intentando cargar desde Google Sheets...");
+        const { loadRutasVendedoresFromGoogleSheets } = await import("./googleSheetsReader.js");
+        rutasData = await loadRutasVendedoresFromGoogleSheets(googleSheetUrl);
+        console.log("   ✓ Rutas cargadas desde Google Sheets");
+      } catch (googleError) {
+        console.warn("   ⚠️  Error cargando desde Google Sheets, usando Excel local...");
+        console.warn("   ", googleError.message);
+        rutasData = await readExcelFileOptimized(
+          paths.excelRutas,
+          null,
+          1,
+          ["RUTA", "ZONA", "DIA", "VENDEDOR"]
+        );
+        setCachedData("RUTAS_KEY", rutasData);
+      }
+    } else {
+      console.log("   📄 Google Sheets no configurado, usando Excel local");
+      rutasData = await readExcelFileOptimized(
+        paths.excelRutas,
+        null,
+        1,
+        ["RUTA", "ZONA", "DIA", "VENDEDOR"]
+      );
+      setCachedData("RUTAS_KEY", rutasData);
+    }
 
     // 4. Motivos
     console.log("📊 Cargando Motivos...");

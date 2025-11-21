@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import routes from "./routes/index.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { loadExcelDataOnStartup } from "./services/excelReader.js";
+import { verificarConexion } from "./config/mysql.js";
 
 // Cargar variables de entorno
 dotenv.config();
@@ -46,10 +47,21 @@ app.get("/health", (req, res) => {
 // Manejo de errores centralizado
 app.use(errorHandler);
 
-// Cargar datos de Excel al iniciar servidor
-loadExcelDataOnStartup()
-  .then(() => {
-    // Iniciar servidor
+// Inicializar servidor
+async function startServer() {
+  try {
+    // 1. Verificar conexión a MySQL
+    console.log("🔍 Verificando conexión a MySQL...");
+    const mysqlOk = await verificarConexion();
+
+    if (!mysqlOk) {
+      console.warn("⚠️  MySQL no disponible. El sistema continuará pero sin persistencia en BD.");
+    }
+
+    // 2. Cargar datos de Excel
+    await loadExcelDataOnStartup();
+
+    // 3. Iniciar servidor
     app.listen(PORT, "0.0.0.0", () => {
       console.log("╔════════════════════════════════════════╗");
       console.log("║   🚀 Servidor Backend Iniciado        ║");
@@ -58,13 +70,19 @@ loadExcelDataOnStartup()
       console.log(`🌍 Entorno: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 URL Local: http://localhost:${PORT}`);
       console.log(`✅ Excel cargados en memoria`);
+      if (mysqlOk) {
+        console.log(`✅ MySQL conectado`);
+      }
       console.log("════════════════════════════════════════\n");
     });
-  })
-  .catch((error) => {
-    console.error("❌ Error al cargar Excel:", error.message);
+  } catch (error) {
+    console.error("❌ Error al iniciar servidor:", error.message);
     process.exit(1);
-  });
+  }
+}
+
+// Iniciar
+startServer();
 
 // Manejo de cierre graceful
 process.on("SIGTERM", () => {

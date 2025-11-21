@@ -22,12 +22,15 @@
   "scripts": {
     "start": "node --max-old-space-size=12288 index.js",
     "dev": "node --max-old-space-size=12288 node_modules/nodemon/bin/nodemon.js index.js",
-    "generate-hash": "node scripts/generateHash.js"
+    "generate-hash": "node scripts/generateHash.js",
+    "init-db": "node scripts/initDatabase.js"
   },
   "dependencies": {
+    "axios": "^1.7.9",
     "bcryptjs": "3.0.3",
     "compression": "1.8.1",
     "cors": "2.8.5",
+    "csv-parse": "^5.6.0",
     "dotenv": "17.2.3",
     "exceljs": "4.4.0",
     "express": "5.1.0",
@@ -35,6 +38,7 @@
     "helmet": "8.1.0",
     "morgan": "1.10.1",
     "multer": "2.0.2",
+    "mysql2": "^3.13.0",
     "node-cache": "5.1.2",
     "uuid": "13.0.0"
   },
