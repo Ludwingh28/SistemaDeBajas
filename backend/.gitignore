@@ -37,6 +37,7 @@ dist-ssr
 /data/*.db
 /uploads/*.png
 /uploads/*.jpg
+/uploads/temp/*
 !uploads/.gitkeep
 ./reportes/*.xlsx
 ./reportes/*.xls

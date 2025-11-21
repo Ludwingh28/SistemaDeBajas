@@ -2,6 +2,7 @@ import express from "express";
 import bajasRouter from "./bajas.js";
 import motivosRouter from "./motivos.js";
 import reportesRouter from "./reportes.js";
+import adminRouter from "./admin.js";
 import { generalLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
@@ -13,6 +14,9 @@ router.use(generalLimiter);
 router.use("/bajas", bajasRouter);
 router.use("/motivos", motivosRouter);
 router.use("/reportes", reportesRouter);
+
+// Rutas admin (interfaces HTML y procesamiento)
+router.use("/", adminRouter);
 
 // Ruta de prueba
 router.get("/test", (req, res) => {
