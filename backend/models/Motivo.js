@@ -1,11 +1,11 @@
 import { query } from '../config/mysql.js';
 
 class Motivo {
-  // Obtener todos los motivos activos
+  // Obtener todos los motivos (activos e inactivos)
   static async getAll() {
     try {
       const motivos = await query(
-        'SELECT id, nombre FROM motivos WHERE activo = TRUE ORDER BY nombre ASC'
+        'SELECT id, nombre, activo FROM motivos ORDER BY activo DESC, nombre ASC'
       );
       return motivos;
     } catch (error) {

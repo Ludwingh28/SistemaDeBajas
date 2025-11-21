@@ -17,12 +17,10 @@ router.get("/", async (req, res, next) => {
       });
     }
 
-    // Retornar solo los nombres de motivos (formato compatible con el frontend)
-    const nombresMotivos = motivos.map(m => m.nombre);
-
+    // Retornar objetos completos con id, nombre y activo
     res.json({
-      motivos: nombresMotivos,
-      total: nombresMotivos.length,
+      motivos: motivos,
+      total: motivos.length,
     });
   } catch (error) {
     console.error("❌ Error obteniendo motivos:", error);
@@ -92,7 +90,7 @@ router.put("/:id", async (req, res, next) => {
     }
 
     // Actualizar motivo
-    await Motivo.update(parseInt(id) + 1, nombre.trim()); // +1 porque el index viene de 0
+    await Motivo.update(parseInt(id), nombre.trim());
 
     res.json({
       message: "Motivo actualizado exitosamente",
@@ -119,7 +117,7 @@ router.patch("/:id/desactivar", async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    await Motivo.deactivate(parseInt(id) + 1); // +1 porque el index viene de 0
+    await Motivo.deactivate(parseInt(id));
 
     res.json({
       message: "Motivo desactivado exitosamente",
@@ -138,7 +136,7 @@ router.patch("/:id/activar", async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    await Motivo.activate(parseInt(id) + 1); // +1 porque el index viene de 0
+    await Motivo.activate(parseInt(id));
 
     res.json({
       message: "Motivo activado exitosamente",

@@ -67,7 +67,7 @@ const GestionMotivos = ({ onBack }) => {
     }
   };
 
-  const editarMotivo = async (index, motivoActual) => {
+  const editarMotivo = async (id, motivoActual) => {
     const { value: nuevoNombre } = await Swal.fire({
       title: "Editar Motivo",
       input: "text",
@@ -85,7 +85,7 @@ const GestionMotivos = ({ onBack }) => {
 
     if (nuevoNombre && nuevoNombre !== motivoActual) {
       try {
-        await axios.put(`http://localhost:3001/api/motivos/${index}`, {
+        await axios.put(`http://localhost:3001/api/motivos/${id}`, {
           nombre: nuevoNombre.trim(),
         });
 
@@ -108,7 +108,7 @@ const GestionMotivos = ({ onBack }) => {
     }
   };
 
-  const toggleActivoMotivo = async (index, motivoNombre, estaActivo) => {
+  const toggleActivoMotivo = async (id, motivoNombre, estaActivo) => {
     const accion = estaActivo ? "inhabilitar" : "activar";
     const result = await Swal.fire({
       title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} motivo?`,
@@ -122,7 +122,7 @@ const GestionMotivos = ({ onBack }) => {
     if (result.isConfirmed) {
       try {
         const endpoint = estaActivo ? "desactivar" : "activar";
-        await axios.patch(`http://localhost:3001/api/motivos/${index}/${endpoint}`);
+        await axios.patch(`http://localhost:3001/api/motivos/${id}/${endpoint}`);
 
         Swal.fire({
           icon: "success",
@@ -165,9 +165,15 @@ const GestionMotivos = ({ onBack }) => {
 
         {/* Stats */}
         <div className="bg-purple-50 rounded-xl p-4 mb-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-600">{motivos.length}</div>
-            <div className="text-sm text-gray-600">Motivos Activos</div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600">{motivos.filter(m => m.activo).length}</div>
+              <div className="text-sm text-gray-600">Activos</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold text-red-600">{motivos.filter(m => !m.activo).length}</div>
+              <div className="text-sm text-gray-600">Inactivos</div>
+            </div>
           </div>
         </div>
 
@@ -209,35 +215,47 @@ const GestionMotivos = ({ onBack }) => {
             <div className="space-y-3">
               {motivos.map((motivo, index) => (
                 <div
-                  key={index}
+                  key={motivo.id}
                   className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="bg-purple-100 w-8 h-8 rounded-full flex items-center justify-center text-purple-600 font-semibold text-sm flex-shrink-0">
                       {index + 1}
                     </div>
-                    <span className="text-gray-800 font-medium break-words">{motivo}</span>
+                    <span className={`font-medium break-words ${motivo.activo ? 'text-gray-800' : 'text-gray-500 line-through'}`}>
+                      {motivo.nombre}
+                    </span>
                   </div>
 
                   <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold">Activo</span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      motivo.activo
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-red-100 text-red-700'
+                    }`}>
+                      {motivo.activo ? 'Activo' : 'Inactivo'}
+                    </span>
 
                     {/* Botón Editar */}
                     <button
-                      onClick={() => editarMotivo(index, motivo)}
+                      onClick={() => editarMotivo(motivo.id, motivo.nombre)}
                       className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
                       title="Editar motivo"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
 
-                    {/* Botón Inhabilitar */}
+                    {/* Botón Toggle Activo/Inactivo */}
                     <button
-                      onClick={() => toggleActivoMotivo(index, motivo, true)}
-                      className="p-2 bg-orange-100 text-orange-600 rounded-lg hover:bg-orange-200 transition-colors"
-                      title="Inhabilitar motivo"
+                      onClick={() => toggleActivoMotivo(motivo.id, motivo.nombre, motivo.activo)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        motivo.activo
+                          ? 'bg-orange-100 text-orange-600 hover:bg-orange-200'
+                          : 'bg-green-100 text-green-600 hover:bg-green-200'
+                      }`}
+                      title={motivo.activo ? 'Inhabilitar motivo' : 'Activar motivo'}
                     >
-                      <ToggleRight className="w-4 h-4" />
+                      {motivo.activo ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>

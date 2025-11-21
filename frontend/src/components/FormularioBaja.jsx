@@ -216,11 +216,13 @@ const FormularioBaja = () => {
             disabled={isLoading}
           >
             <option value="">Selecciona un motivo</option>
-            {motivos.map((motivo, index) => (
-              <option key={index} value={motivo}>
-                {motivo}
-              </option>
-            ))}
+            {motivos
+              .filter((motivo) => motivo.activo)
+              .map((motivo) => (
+                <option key={motivo.id} value={motivo.nombre}>
+                  {motivo.nombre}
+                </option>
+              ))}
           </select>
         </div>
 
