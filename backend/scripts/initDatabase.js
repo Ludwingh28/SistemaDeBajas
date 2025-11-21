@@ -60,6 +60,38 @@ async function initDatabase() {
     `);
     console.log('✓ Tabla "motivos" creada');
 
+    // Crear tabla de ventas
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS ventas (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        fecha DATE NOT NULL,
+        codigo_cliente VARCHAR(50) NOT NULL,
+        nombre_cliente VARCHAR(255) NOT NULL,
+        fecha_carga TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_codigo_cliente (codigo_cliente),
+        INDEX idx_fecha (fecha),
+        INDEX idx_codigo_fecha (codigo_cliente, fecha)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✓ Tabla "ventas" creada');
+
+    // Crear tabla de clientes
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS clientes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        codigo VARCHAR(50) NOT NULL UNIQUE,
+        nombre VARCHAR(255) NOT NULL,
+        ruta VARCHAR(100),
+        zona VARCHAR(100),
+        activo BOOLEAN DEFAULT TRUE,
+        fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_codigo (codigo),
+        INDEX idx_ruta (ruta),
+        INDEX idx_activo (activo)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✓ Tabla "clientes" creada');
+
     // Crear tabla de reportes
     await connection.query(`
       CREATE TABLE IF NOT EXISTS reportes (

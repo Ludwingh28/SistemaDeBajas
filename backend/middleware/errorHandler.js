@@ -43,3 +43,6 @@ export class AppError extends Error {
     Error.captureStackTrace(this, this.constructor);
   }
 }
+
+// Export por defecto para compatibilidad
+export default { errorHandler, notFoundHandler, AppError };
