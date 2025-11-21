@@ -3,6 +3,7 @@ import { uploadPhotos, cleanupUploads } from "../middleware/uploadHandler.js";
 import { bajasLimiter } from "../middleware/rateLimiter.js";
 import { validateRequiredFields } from "../middleware/auth.js";
 import { validarCliente } from "../services/validator.js";
+import { validarClienteMySQL } from "../services/validatorMySQL.js";
 import { agregarSolicitudAlReporte } from "../services/reportGenerator.js";
 import { logSolicitud } from "../logs/logger.js";
 import { AppError } from "../middleware/errorHandler.js";
@@ -38,8 +39,8 @@ router.post(
       console.log(`IP: ${req.ip}`);
       console.log("=".repeat(60) + "\n");
 
-      // 1. Validar cliente
-      const resultado = validarCliente(codigoCliente, motivo);
+      // 1. Validar cliente usando MySQL
+      const resultado = await validarClienteMySQL(codigoCliente, motivo);
 
       // 2. Agregar al reporte de supervisores (Excel)
       await agregarSolicitudAlReporte(resultado);
