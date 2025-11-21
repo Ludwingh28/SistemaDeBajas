@@ -1,12 +1,8 @@
 import express from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import multer from 'multer';
 import { importarVentasDesdeExcel } from '../services/ventasImporter.js';
 import Venta from '../models/Venta.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
@@ -24,22 +20,6 @@ const upload = multer({
       cb(new Error('Solo se permiten archivos Excel (.xlsx, .xls)'));
     }
   }
-});
-
-/**
- * GET /api/motivos
- * Servir interfaz HTML de gestión de motivos
- */
-router.get('/motivos', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'motivos.html'));
-});
-
-/**
- * GET /api/actualizarBD
- * Servir interfaz HTML para actualizar base de datos
- */
-router.get('/actualizarBD', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'actualizarBD.html'));
 });
 
 /**
