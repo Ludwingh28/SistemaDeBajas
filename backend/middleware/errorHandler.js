@@ -33,7 +33,6 @@ export const notFoundHandler = (req, res, next) => {
   error.statusCode = 404;
   next(error);
 };
-
 // Helper para crear errores personalizados
 export class AppError extends Error {
   constructor(message, statusCode = 500, details = null) {
