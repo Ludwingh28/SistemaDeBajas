@@ -2,95 +2,146 @@ import ExcelJS from 'exceljs';
 import Venta from '../models/Venta.js';
 
 /**
- * Procesa un archivo Excel y extrae ventas
+ * Procesa un archivo Excel usando STREAMING (para archivos grandes)
+ * Inserta directamente a la base de datos en batches sin cargar todo en memoria
  * @param {string} filePath - Ruta al archivo Excel
  * @param {string} sheetName - Nombre de la hoja
  * @param {number} headerRow - Fila donde están los headers
- * @returns {Promise<Array>} Array de ventas
+ * @param {boolean} reemplazar - Si true, trunca la tabla antes de insertar
+ * @returns {Promise<Object>} Resultado de la importación
  */
-async function procesarExcelVentas(filePath, sheetName = 'VentasPOD', headerRow = 4) {
+async function procesarExcelVentasStreaming(filePath, sheetName = 'VentasPOD', headerRow = 4, reemplazar = false) {
   try {
-    console.log(`📖 Procesando Excel: ${filePath}`);
+    console.log(`📖 Procesando Excel con streaming: ${filePath}`);
 
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(filePath);
-
-    const worksheet = workbook.getWorksheet(sheetName);
-    if (!worksheet) {
-      throw new Error(`Hoja "${sheetName}" no encontrada`);
+    // Si reemplazar, truncar tabla primero
+    if (reemplazar) {
+      console.log('⚠️  Reemplazando todos los datos de ventas...');
+      await Venta.truncate();
     }
 
-    const ventas = [];
-    let headers = [];
+    const workbookReader = new ExcelJS.stream.xlsx.WorkbookReader(filePath, {
+      sharedStrings: 'cache',
+      hyperlinks: 'ignore',
+      worksheets: 'emit'
+    });
 
-    worksheet.eachRow((row, rowNumber) => {
-      // Leer headers
-      if (rowNumber === headerRow) {
-        headers = row.values.map(h => h?.toString().trim() || '');
-        return;
+    let headers = [];
+    let batch = [];
+    let totalProcesados = 0;
+    let totalInsertados = 0;
+    const BATCH_SIZE = 1000;
+    let targetSheetFound = false;
+
+    for await (const worksheetReader of workbookReader) {
+      // Buscar la hoja correcta
+      if (worksheetReader.name !== sheetName) {
+        continue;
       }
 
-      // Procesar datos
-      if (rowNumber > headerRow) {
-        const rowData = {};
-        row.values.forEach((cellValue, colNumber) => {
-          const header = headers[colNumber];
-          if (header) {
-            rowData[header] = cellValue;
-          }
-        });
+      targetSheetFound = true;
+      console.log(`   ✓ Hoja "${sheetName}" encontrada`);
 
-        // Extraer solo: Fecha, Cliente (código), Nombre Cliente
-        const fecha = rowData['Fecha'];
-        const codigoCliente = rowData['Cliente'];
-        const nombreCliente = rowData['Nombre Cliente'];
+      let rowNumber = 0;
 
-        if (fecha && codigoCliente) {
-          // Convertir fecha a formato YYYY-MM-DD
-          let fechaFormateada;
-          if (fecha instanceof Date) {
-            fechaFormateada = fecha.toISOString().split('T')[0];
-          } else if (typeof fecha === 'string') {
-            // Intentar parsear string de fecha
-            const parsedDate = new Date(fecha);
-            if (!isNaN(parsedDate)) {
-              fechaFormateada = parsedDate.toISOString().split('T')[0];
+      for await (const row of worksheetReader) {
+        rowNumber++;
+
+        // Leer headers
+        if (rowNumber === headerRow) {
+          headers = row.values.map(h => h?.toString().trim() || '');
+          console.log(`   ✓ Headers encontrados en fila ${headerRow}`);
+          continue;
+        }
+
+        // Procesar datos
+        if (rowNumber > headerRow && headers.length > 0) {
+          const rowData = {};
+          row.values.forEach((cellValue, colNumber) => {
+            const header = headers[colNumber];
+            if (header) {
+              rowData[header] = cellValue;
             }
-          }
+          });
 
-          if (fechaFormateada) {
-            ventas.push({
-              fecha: fechaFormateada,
-              codigo_cliente: codigoCliente.toString().trim(),
-              nombre_cliente: nombreCliente?.toString().trim() || ''
-            });
+          // Extraer datos necesarios
+          const fecha = rowData['Fecha'];
+          const codigoCliente = rowData['Cliente'];
+          const nombreCliente = rowData['Nombre Cliente'];
+
+          if (fecha && codigoCliente) {
+            // Convertir fecha
+            let fechaFormateada;
+            if (fecha instanceof Date) {
+              fechaFormateada = fecha.toISOString().split('T')[0];
+            } else if (typeof fecha === 'string') {
+              const parsedDate = new Date(fecha);
+              if (!isNaN(parsedDate)) {
+                fechaFormateada = parsedDate.toISOString().split('T')[0];
+              }
+            }
+
+            if (fechaFormateada) {
+              batch.push({
+                fecha: fechaFormateada,
+                codigo_cliente: codigoCliente.toString().trim(),
+                nombre_cliente: nombreCliente?.toString().trim() || ''
+              });
+
+              totalProcesados++;
+
+              // Insertar batch cuando alcance el tamaño
+              if (batch.length >= BATCH_SIZE) {
+                await Venta.insertBatch(batch);
+                totalInsertados += batch.length;
+                console.log(`   ⏳ Insertados ${totalInsertados} registros...`);
+                batch = []; // Limpiar batch
+              }
+            }
           }
         }
       }
-    });
 
-    console.log(`✓ ${ventas.length} ventas procesadas desde Excel`);
-    return ventas;
+      // Insertar último batch si quedó algo
+      if (batch.length > 0) {
+        await Venta.insertBatch(batch);
+        totalInsertados += batch.length;
+        console.log(`   ⏳ Insertados ${totalInsertados} registros (final)`);
+      }
+    }
+
+    if (!targetSheetFound) {
+      throw new Error(`Hoja "${sheetName}" no encontrada en el Excel`);
+    }
+
+    console.log(`✓ Total procesados: ${totalProcesados} ventas`);
+    console.log(`✓ Total insertados: ${totalInsertados} ventas`);
+
+    return {
+      procesados: totalProcesados,
+      insertados: totalInsertados
+    };
+
   } catch (error) {
-    console.error('Error procesando Excel:', error);
+    console.error('Error procesando Excel con streaming:', error);
     throw error;
   }
 }
 
 /**
- * Importa ventas desde Excel a MySQL
+ * Importa ventas desde Excel a MySQL usando STREAMING
  * @param {string} filePath - Ruta al archivo Excel
  * @param {boolean} reemplazar - Si true, reemplaza todos los datos. Si false, solo agrega
  * @returns {Promise<Object>} Resultado de la importación
  */
 export async function importarVentasDesdeExcel(filePath, reemplazar = false) {
   try {
-    console.log('\n🔄 Iniciando importación de ventas...');
+    console.log('\n🔄 Iniciando importación de ventas (modo streaming)...');
 
-    // 1. Procesar Excel
-    const ventas = await procesarExcelVentas(filePath);
+    // Procesar con streaming (inserta directamente sin cargar todo en memoria)
+    const resultado = await procesarExcelVentasStreaming(filePath, 'VentasPOD', 4, reemplazar);
 
-    if (ventas.length === 0) {
+    if (resultado.insertados === 0) {
       return {
         success: false,
         message: 'No se encontraron ventas en el archivo',
@@ -98,35 +149,19 @@ export async function importarVentasDesdeExcel(filePath, reemplazar = false) {
       };
     }
 
-    // 2. Si reemplazar, truncar tabla
-    if (reemplazar) {
-      console.log('⚠️  Reemplazando todos los datos...');
-      await Venta.truncate();
-    }
-
-    // 3. Insertar en la base de datos en batches (más eficiente)
-    const BATCH_SIZE = 1000;
-    let totalInsertados = 0;
-
-    for (let i = 0; i < ventas.length; i += BATCH_SIZE) {
-      const batch = ventas.slice(i, i + BATCH_SIZE);
-      await Venta.insertBatch(batch);
-      totalInsertados += batch.length;
-      console.log(`   ⏳ Insertados ${totalInsertados}/${ventas.length}...`);
-    }
-
-    // 4. Verificar resultados
+    // Verificar resultados
     const rangoFechas = await Venta.getRangoFechas();
 
-    console.log('\n✅ Importación completada:');
-    console.log(`   📊 Registros insertados: ${totalInsertados}`);
+    console.log('\n✅ Importación de ventas completada:');
+    console.log(`   📊 Registros procesados: ${resultado.procesados}`);
+    console.log(`   📊 Registros insertados: ${resultado.insertados}`);
     console.log(`   📅 Rango de fechas: ${rangoFechas.min_fecha} a ${rangoFechas.max_fecha}`);
     console.log(`   📆 Días con ventas: ${rangoFechas.dias}\n`);
 
     return {
       success: true,
-      message: 'Ventas importadas correctamente',
-      registros: totalInsertados,
+      message: 'Ventas importadas correctamente (streaming)',
+      registros: resultado.insertados,
       rangoFechas: rangoFechas
     };
   } catch (error) {
@@ -140,6 +175,5 @@ export async function importarVentasDesdeExcel(filePath, reemplazar = false) {
 }
 
 export default {
-  importarVentasDesdeExcel,
-  procesarExcelVentas
+  importarVentasDesdeExcel
 };
