@@ -74,6 +74,12 @@ async function procesarExcelVentasStreaming(filePath, sheetName = 'VentasPOD', h
             let fechaFormateada;
             if (fecha instanceof Date) {
               fechaFormateada = fecha.toISOString().split('T')[0];
+            } else if (typeof fecha === 'number') {
+              // Excel serial number: días desde 1900-01-01
+              // Excel bug: cuenta 1900 como año bisiesto, por eso restamos 2
+              const excelEpoch = new Date(1900, 0, 1);
+              const jsDate = new Date(excelEpoch.getTime() + (fecha - 2) * 86400000);
+              fechaFormateada = jsDate.toISOString().split('T')[0];
             } else if (typeof fecha === 'string') {
               const parsedDate = new Date(fecha);
               if (!isNaN(parsedDate)) {
