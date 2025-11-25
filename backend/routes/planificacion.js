@@ -1,11 +1,15 @@
 import express from 'express';
-import PlanificacionRuta from '../models/PlanificacionRuta.js';
+import Ruta from '../models/Ruta.js';
+import Zona from '../models/Zona.js';
+import Vendedor from '../models/Vendedor.js';
+import Dia from '../models/Dia.js';
 import SyncLog from '../models/SyncLog.js';
 import {
   migrarDatosIniciales,
   sincronizarPlanificacion,
   obtenerEstadisticasSync
 } from '../services/planificacionSyncService.js';
+import { authenticateSupervisor } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -15,7 +19,7 @@ const router = express.Router();
  */
 router.get('/rutas', async (req, res, next) => {
   try {
-    const rutas = await PlanificacionRuta.getAll();
+    const rutas = await Ruta.getAll();
     res.json({
       success: true,
       total: rutas.length,
@@ -34,7 +38,7 @@ router.get('/rutas', async (req, res, next) => {
 router.get('/rutas/:codigo', async (req, res, next) => {
   try {
     const { codigo } = req.params;
-    const ruta = await PlanificacionRuta.getByRuta(codigo);
+    const ruta = await Ruta.getByCodigo(codigo);
 
     if (!ruta) {
       return res.status(404).json({
@@ -54,13 +58,13 @@ router.get('/rutas/:codigo', async (req, res, next) => {
 });
 
 /**
- * GET /api/planificacion/vendedor/:nombre
- * Buscar rutas por vendedor
+ * GET /api/planificacion/vendedor/:id
+ * Buscar rutas por vendedor ID
  */
-router.get('/vendedor/:nombre', async (req, res, next) => {
+router.get('/vendedor/:id', async (req, res, next) => {
   try {
-    const { nombre } = req.params;
-    const rutas = await PlanificacionRuta.getByVendedor(nombre);
+    const { id } = req.params;
+    const rutas = await Ruta.getByVendedor(parseInt(id));
 
     res.json({
       success: true,
@@ -74,13 +78,13 @@ router.get('/vendedor/:nombre', async (req, res, next) => {
 });
 
 /**
- * GET /api/planificacion/zona/:zona
- * Buscar rutas por zona
+ * GET /api/planificacion/zona/:id
+ * Buscar rutas por zona ID
  */
-router.get('/zona/:zona', async (req, res, next) => {
+router.get('/zona/:id', async (req, res, next) => {
   try {
-    const { zona } = req.params;
-    const rutas = await PlanificacionRuta.getByZona(zona);
+    const { id } = req.params;
+    const rutas = await Ruta.getByZona(parseInt(id));
 
     res.json({
       success: true,
@@ -113,8 +117,9 @@ router.get('/stats', async (req, res, next) => {
 /**
  * POST /api/planificacion/migrar
  * Ejecutar migración inicial (solo una vez)
+ * PROTEGIDO: Requiere autenticación de supervisor
  */
-router.post('/migrar', async (req, res, next) => {
+router.post('/migrar', authenticateSupervisor, async (req, res, next) => {
   try {
     const resultado = await migrarDatosIniciales();
 
@@ -139,8 +144,9 @@ router.post('/migrar', async (req, res, next) => {
 /**
  * POST /api/planificacion/sincronizar
  * Ejecutar sincronización manual
+ * PROTEGIDO: Requiere autenticación de supervisor
  */
-router.post('/sincronizar', async (req, res, next) => {
+router.post('/sincronizar', authenticateSupervisor, async (req, res, next) => {
   try {
     const resultado = await sincronizarPlanificacion();
 
@@ -176,6 +182,83 @@ router.get('/sync-logs', async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Error obteniendo logs:', error);
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/planificacion/limpiar
+ * Limpiar toda la tabla de planificación (usar con precaución)
+ * PROTEGIDO: Requiere autenticación de supervisor
+ */
+router.delete('/limpiar', authenticateSupervisor, async (req, res, next) => {
+  try {
+    console.log('⚠️  Limpiando tablas de planificación...');
+    await Ruta.truncate();
+
+    res.json({
+      success: true,
+      message: 'Tablas limpiadas exitosamente'
+    });
+  } catch (error) {
+    console.error('❌ Error limpiando tablas:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/planificacion/zonas
+ * Obtener todas las zonas
+ */
+router.get('/zonas', async (req, res, next) => {
+  try {
+    const zonas = await Zona.getAll();
+    res.json({
+      success: true,
+      total: zonas.length,
+      zonas
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo zonas:', error);
+    next(error);
+  }
+});
+
+/**
+ * GET /api/planificacion/vendedores
+ * Obtener todos los vendedores
+ */
+router.get('/vendedores', async (req, res, next) => {
+  try {
+    const vendedores = await Vendedor.getAll();
+    res.json({
+      success: true,
+      total: vendedores.length,
+      vendedores
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo vendedores:', error);
+    next(error);
+  }
+});
+
+/**
+ * GET /api/planificacion/dias
+ * Obtener todos los días
+ */
+router.get('/dias', async (req, res, next) => {
+  try {
+    const dias = await Dia.getAll();
+    res.json({
+      success: true,
+      total: dias.length,
+      dias
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo días:', error);
     next(error);
   }
 });

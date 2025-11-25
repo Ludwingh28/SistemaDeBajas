@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ArrowLeft, Download, Calendar } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Download, Calendar, BarChart } from "lucide-react";
 import axios from "axios";
 import Swal from "sweetalert2";
 
@@ -9,6 +9,24 @@ const DescargarReportes = ({ onBack }) => {
   const [fechaInicio, setFechaInicio] = useState(hoy);
   const [fechaFin, setFechaFin] = useState(hoy);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [estadisticas, setEstadisticas] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  useEffect(() => {
+    cargarEstadisticas();
+  }, []);
+
+  const cargarEstadisticas = async () => {
+    try {
+      setLoadingStats(true);
+      const response = await axios.get("http://localhost:3001/api/bajas/estadisticas");
+      setEstadisticas(response.data);
+    } catch (error) {
+      console.error("Error cargando estadísticas:", error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const descargarReporte = async () => {
     if (!fechaInicio || !fechaFin) {
@@ -144,6 +162,34 @@ const DescargarReportes = ({ onBack }) => {
             <p className="text-gray-600 text-sm">Exporta reportes históricos de inhabilitaciones</p>
           </div>
         </div>
+
+        {/* Estadísticas del Día */}
+        {estadisticas && !loadingStats && (
+          <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart className="w-5 h-5 text-purple-600" />
+              <h3 className="text-lg font-bold text-gray-800">Estadísticas del Día</h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-white rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-blue-600">{estadisticas.total}</p>
+                <p className="text-sm text-gray-600">Total</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-green-600">{estadisticas.aprobadas}</p>
+                <p className="text-sm text-gray-600">Aprobadas</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-red-600">{estadisticas.rechazadas}</p>
+                <p className="text-sm text-gray-600">Rechazadas</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-center">
+                <p className="text-2xl font-bold text-yellow-600">{estadisticas.derivadas}</p>
+                <p className="text-sm text-gray-600">Derivadas</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Reporte de Hoy */}
         <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-8">

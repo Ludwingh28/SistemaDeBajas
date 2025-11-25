@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Tag, Database, Download, LogOut } from "lucide-react";
+import { Tag, Database, Download, LogOut, Shield, Cloud } from "lucide-react";
 import GestionMotivos from "./GestionMotivos";
 import ActualizarVentas from "./ActualizarVentas";
 import DescargarReportes from "./DescargarReportes";
+import GestionSupervisores from "./GestionSupervisores";
+import SincronizarGoogleSheets from "./SincronizarGoogleSheets";
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -37,6 +39,20 @@ const AdminDashboard = () => {
       icon: Download,
       color: "from-blue-500 to-blue-700",
     },
+    {
+      id: "supervisores",
+      title: "Gestión de Supervisores",
+      description: "Crear y cambiar códigos de acceso de supervisores",
+      icon: Shield,
+      color: "from-indigo-500 to-indigo-700",
+    },
+    {
+      id: "googlesheets",
+      title: "Sincronizar Google Sheets",
+      description: "Actualizar datos de planificación de rutas manualmente",
+      icon: Cloud,
+      color: "from-cyan-500 to-cyan-700",
+    },
   ];
 
   const renderContent = () => {
@@ -47,9 +63,13 @@ const AdminDashboard = () => {
         return <ActualizarVentas onBack={() => setVistaActiva("menu")} />;
       case "reportes":
         return <DescargarReportes onBack={() => setVistaActiva("menu")} />;
+      case "supervisores":
+        return <GestionSupervisores onBack={() => setVistaActiva("menu")} />;
+      case "googlesheets":
+        return <SincronizarGoogleSheets onBack={() => setVistaActiva("menu")} />;
       default:
         return (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {menuOptions.map((option) => {
               const Icon = option.icon;
               return (

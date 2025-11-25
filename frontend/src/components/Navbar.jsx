@@ -1,47 +1,7 @@
-import { Download, HelpCircle } from "lucide-react";
-import Swal from "sweetalert2";
-import { showSupervisorPrompt, showLoadingAlert, showGeneralError } from "../utils/alerts";
-import { reportesAPI } from "../utils/api";
+import { HelpCircle } from "lucide-react";
 import { iniciarTutorial } from "../utils/tutorial";
 
 const Navbar = () => {
-  const handleDescargarReporte = async () => {
-    const codigo = await showSupervisorPrompt();
-
-    if (!codigo) return;
-
-    const loadingSwal = showLoadingAlert();
-
-    try {
-      const blob = await reportesAPI.descargar(codigo);
-
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `reporte-bajas-${new Date().toISOString().split("T")[0]}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      loadingSwal.close();
-
-      await Swal.fire({
-        icon: "success",
-        title: "Reporte descargado",
-        text: "El archivo se ha descargado correctamente",
-        confirmButtonText: "Entendido",
-      });
-    } catch (error) {
-      loadingSwal.close();
-
-      if (error.response?.status === 403) {
-        showGeneralError("Código de supervisor inválido");
-      } else {
-        showGeneralError("Error al descargar el reporte. Intenta de nuevo.");
-      }
-    }
-  };
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
@@ -70,28 +30,14 @@ const Navbar = () => {
             {/* Botón de Ayuda */}
             <button
               onClick={iniciarTutorial}
-              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg 
-                         flex items-center space-x-2 transition-all duration-200 
+              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg
+                         flex items-center space-x-2 transition-all duration-200
                          shadow-md hover:shadow-lg active:scale-95"
               aria-label="Ver tutorial"
               title="Ver tutorial del sistema"
             >
               <HelpCircle className="w-5 h-5" />
               <span className="hidden sm:inline">Ayuda</span>
-            </button>
-
-            {/* Botón Supervisor */}
-            <button
-              onClick={handleDescargarReporte}
-              className="bg-white text-blue-600 hover:bg-blue-50 font-semibold py-2 px-4 rounded-lg 
-                         flex items-center space-x-2 transition-all duration-200 
-                         shadow-md hover:shadow-lg active:scale-95"
-              aria-label="Descargar reporte (solo supervisores)"
-              title="Descargar reporte de bajas"
-            >
-              <Download className="w-5 h-5" />
-              <span className="hidden sm:inline">Descargar Reporte</span>
-              <span className="sm:hidden">Reporte</span>
             </button>
           </div>
         </div>

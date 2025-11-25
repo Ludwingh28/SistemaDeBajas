@@ -4,6 +4,7 @@ import motivosRouter from "./motivos.js";
 import reportesRouter from "./reportes.js";
 import adminRouter from "./admin.js";
 import planificacionRouter from "./planificacion.js";
+import supervisoresRouter from "./supervisores.js";
 import { generalLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
@@ -16,6 +17,7 @@ router.use("/bajas", bajasRouter);
 router.use("/motivos", motivosRouter);
 router.use("/reportes", reportesRouter);
 router.use("/planificacion", planificacionRouter);
+router.use("/supervisores", supervisoresRouter);
 
 // Rutas admin (interfaces HTML y procesamiento)
 router.use("/", adminRouter);

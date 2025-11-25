@@ -83,15 +83,6 @@ export const iniciarTutorial = () => {
         },
       },
       {
-        element: "nav button:last-child",
-        popover: {
-          title: "📥 Descarga de Reportes (Solo Supervisores)",
-          description: "Los supervisores pueden descargar un reporte completo en Excel con todas las solicitudes del día. Se requiere un código de supervisor válido.",
-          side: "left",
-          align: "start",
-        },
-      },
-      {
         popover: {
           title: "✅ ¡Listo para Empezar!",
           description: "Ya conoces todas las funciones del sistema. Si necesitas ver este tutorial nuevamente, haz clic en el botón de ayuda. ¡Buena suerte!",

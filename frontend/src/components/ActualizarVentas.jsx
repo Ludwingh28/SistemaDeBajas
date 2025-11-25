@@ -106,12 +106,15 @@ const ActualizarVentas = ({ onBack }) => {
       if (response.data.success) {
         setProgress(100);
 
+        const ventasProcesadas = response.data.ventas?.insertados || response.data.ventas?.actualizados || 0;
+        const clientesProcesados = response.data.clientes?.insertados || response.data.clientes?.actualizados || 0;
+
         await Swal.fire({
           icon: "success",
           title: "¡Éxito!",
           html: `
-            <p>${response.data.message}</p>
-            <p class="mt-2"><strong>Registros procesados:</strong> ${response.data.registros.toLocaleString()}</p>
+            <p><strong>Ventas:</strong> ${ventasProcesadas} registros procesados</p>
+            <p><strong>Clientes:</strong> ${clientesProcesados} registros procesados</p>
           `,
         });
 

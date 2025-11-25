@@ -27,9 +27,11 @@ class SyncLog {
    */
   static async getRecent(limit = 20) {
     try {
+      // Asegurar que limit sea un número válido
+      const safeLimit = Math.max(1, Math.min(100, parseInt(limit) || 20));
+
       const logs = await query(
-        'SELECT * FROM sync_log ORDER BY fecha_sync DESC LIMIT ?',
-        [limit]
+        `SELECT * FROM sync_log ORDER BY fecha_sync DESC LIMIT ${safeLimit}`
       );
       return logs;
     } catch (error) {

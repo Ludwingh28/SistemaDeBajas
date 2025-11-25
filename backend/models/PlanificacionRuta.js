@@ -138,7 +138,10 @@ class PlanificacionRuta {
    */
   static async truncate() {
     try {
-      await query('TRUNCATE TABLE planificacion_rutas');
+      // Usar DELETE en lugar de TRUNCATE para evitar problemas con claves foráneas
+      await query('DELETE FROM planificacion_rutas');
+      // Resetear el auto_increment
+      await query('ALTER TABLE planificacion_rutas AUTO_INCREMENT = 1');
       return true;
     } catch (error) {
       console.error('Error limpiando tabla de rutas:', error);

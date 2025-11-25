@@ -1,7 +1,7 @@
-import { verifySupervisorCode } from "../config/supervisores.js";
+import Supervisor from "../models/Supervisor.js";
 import { AppError } from "./errorHandler.js";
 
-// Middleware para verificar código de supervisor
+// Middleware para verificar código de supervisor (usando BD)
 export const authenticateSupervisor = async (req, res, next) => {
   try {
     const { codigoSupervisor } = req.body;
@@ -11,24 +11,29 @@ export const authenticateSupervisor = async (req, res, next) => {
       throw new AppError("Código de supervisor requerido", 400);
     }
 
-    // Verificar el código
-    const isValid = await verifySupervisorCode(codigoSupervisor);
+    // Verificar el código contra todos los supervisores activos
+    const resultado = await Supervisor.verificarCodigoSolo(codigoSupervisor);
 
-    if (!isValid) {
+    if (!resultado.valido) {
       // Log de intento fallido
       console.warn("⚠️  Intento de acceso con código inválido:", {
         ip: req.ip,
         timestamp: new Date().toISOString(),
+        razon: resultado.mensaje
       });
 
-      throw new AppError("Código de supervisor inválido", 403);
+      throw new AppError(resultado.mensaje || "Código de supervisor inválido", 403);
     }
 
     // Log de acceso exitoso
     console.log("✅ Supervisor autenticado:", {
+      nombre: resultado.supervisor.nombre,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
+
+    // Agregar info del supervisor al request
+    req.supervisor = resultado.supervisor;
 
     // Continuar con la petición
     next();
