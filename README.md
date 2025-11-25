@@ -147,7 +147,7 @@ npm run dev
 
 **Acceso al sistema:**
 - **Vendedores:** http://localhost:5173
-- **Supervisores/Administradores:** http://localhost:3001/api/index
+- **Supervisores/Administradores:** http://localhost:5173/api/index
 
 ## 📖 Documentación
 
