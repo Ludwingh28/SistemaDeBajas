@@ -44,3 +44,4 @@ dist-ssr
 ./reportes/*.csv
 ./reportes/*.db
 !reportes/.gitkeep
+./reportes/PLANIFICACION - FINAL PLANIFICACION-DB.csv
