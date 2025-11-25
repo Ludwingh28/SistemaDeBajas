@@ -338,8 +338,6 @@ SistemaDeBajas/
 │   ├── DocumentacionUsuario.tex
 │   └── COMPILAR_LATEX.md
 ├── .gitignore
-├── PRODUCCION_CHECKLIST.md
-├── INSTRUCCIONES_MIGRACION.md
 └── README.md                # Este archivo
 ```
 
