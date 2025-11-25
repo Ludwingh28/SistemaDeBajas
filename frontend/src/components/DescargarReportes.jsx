@@ -165,7 +165,7 @@ const DescargarReportes = ({ onBack }) => {
 
         {/* Estadísticas del Día */}
         {estadisticas && !loadingStats && (
-          <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 mb-8">
+          <div className="bg-linear-to-r from-purple-50 to-purple-100 rounded-xl p-6 mb-8">
             <div className="flex items-center gap-2 mb-4">
               <BarChart className="w-5 h-5 text-purple-600" />
               <h3 className="text-lg font-bold text-gray-800">Estadísticas del Día</h3>
@@ -192,7 +192,7 @@ const DescargarReportes = ({ onBack }) => {
         )}
 
         {/* Reporte de Hoy */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-8">
+        <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-8">
           <h3 className="text-lg font-bold text-gray-800 mb-3">📅 Reporte de Hoy</h3>
           <p className="text-sm text-gray-600 mb-4">Descarga el reporte de solicitudes del día {hoy}</p>
           <button
@@ -262,7 +262,7 @@ const DescargarReportes = ({ onBack }) => {
             onClick={descargarReporte}
             disabled={isDownloading}
             className={`w-full py-4 rounded-lg font-semibold text-white flex items-center justify-center gap-2
-              ${isDownloading ? "bg-gray-400 cursor-not-allowed" : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 active:scale-95"} transition-all shadow-lg`}
+              ${isDownloading ? "bg-gray-400 cursor-not-allowed" : "bg-linear-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 active:scale-95"} transition-all shadow-lg`}
           >
             <Download className="w-5 h-5" />
             {isDownloading ? "Descargando..." : "Exportar a Excel"}
@@ -272,7 +272,8 @@ const DescargarReportes = ({ onBack }) => {
         {/* Nota */}
         <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
           <p className="text-sm text-yellow-800">
-            <strong>Nota:</strong> El reporte incluirá todas las solicitudes de inhabilitación registradas en el rango de fechas seleccionado, incluyendo: código, nombre, motivo, zona, ruta, vendedor, resultado y razón.
+            <strong>Nota:</strong> El reporte incluirá todas las solicitudes de inhabilitación registradas en el rango de fechas seleccionado, incluyendo: código, nombre, motivo, zona, ruta, vendedor,
+            resultado y razón.
           </p>
         </div>
       </div>

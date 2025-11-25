@@ -103,7 +103,7 @@ const SupervisorAuth = ({ onSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-purple-700 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-600 to-purple-700 p-4">
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
         <div className="flex flex-col items-center mb-6">
           <div className="bg-blue-100 p-4 rounded-full mb-4">
@@ -145,9 +145,7 @@ const SupervisorAuth = ({ onSuccess }) => {
           {/* Mostrar cooldown si está activo */}
           {cooldownRestante > 0 && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-center font-semibold">
-                Espera {cooldownRestante}s antes de intentar nuevamente
-              </p>
+              <p className="text-red-700 text-center font-semibold">Espera {cooldownRestante}s antes de intentar nuevamente</p>
             </div>
           )}
 

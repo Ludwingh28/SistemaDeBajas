@@ -97,7 +97,7 @@ const ActualizarVentas = ({ onBack }) => {
         },
         onUploadProgress: (progressEvent) => {
           const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setProgress(30 + (percent * 0.4));
+          setProgress(30 + percent * 0.4);
         },
       });
 
@@ -221,7 +221,7 @@ const ActualizarVentas = ({ onBack }) => {
             {reemplazar && (
               <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded mb-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
                   <div className="text-sm text-yellow-800">
                     <strong>Advertencia:</strong> Esta acción eliminará todas las ventas actuales y las reemplazará con los nuevos datos. Esta operación no se puede deshacer.
                   </div>
@@ -249,7 +249,7 @@ const ActualizarVentas = ({ onBack }) => {
               <div className="mt-4">
                 <div className="w-full h-8 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-white text-sm font-semibold transition-all duration-300"
+                    className="h-full bg-linear-to-r from-green-500 to-green-600 flex items-center justify-center text-white text-sm font-semibold transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   >
                     {progress}%
