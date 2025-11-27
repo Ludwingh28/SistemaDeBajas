@@ -19,7 +19,7 @@ const DescargarReportes = ({ onBack }) => {
   const cargarEstadisticas = async () => {
     try {
       setLoadingStats(true);
-      const response = await axios.get("http://localhost:3001/api/bajas/estadisticas");
+      const response = await axios.get("/api/bajas/estadisticas");
       setEstadisticas(response.data);
     } catch (error) {
       console.error("Error cargando estadísticas:", error);
@@ -53,7 +53,7 @@ const DescargarReportes = ({ onBack }) => {
       const supervisorCode = sessionStorage.getItem("supervisorCode");
 
       const response = await axios.post(
-        "http://localhost:3001/api/reportes/descargar-historico",
+        "/api/reportes/descargar-historico",
         {
           codigoSupervisor: supervisorCode,
           fechaInicio,
@@ -108,7 +108,7 @@ const DescargarReportes = ({ onBack }) => {
       const supervisorCode = sessionStorage.getItem("supervisorCode");
 
       const response = await axios.post(
-        "http://localhost:3001/api/reportes/descargar",
+        "/api/reportes/descargar",
         {
           codigoSupervisor: supervisorCode,
         },

@@ -50,7 +50,7 @@ const SupervisorAuth = ({ onSuccess }) => {
 
     try {
       // Verificar credenciales con el endpoint de verificación
-      const response = await axios.post("http://localhost:3001/api/supervisores/verificar", {
+      const response = await axios.post("/api/supervisores/verificar", {
         codigo: codigo.trim(),
       });
 

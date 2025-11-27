@@ -15,7 +15,7 @@ const GestionMotivos = ({ onBack }) => {
 
   const cargarMotivos = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/motivos");
+      const response = await axios.get("/api/motivos");
       setMotivos(response.data.motivos || []);
     } catch (error) {
       console.error("Error cargando motivos:", error);
@@ -42,7 +42,7 @@ const GestionMotivos = ({ onBack }) => {
     setIsLoading(true);
 
     try {
-      await axios.post("http://localhost:3001/api/motivos/agregar", {
+      await axios.post("/api/motivos/agregar", {
         motivo: nuevoMotivo.trim(),
       });
 
@@ -85,7 +85,7 @@ const GestionMotivos = ({ onBack }) => {
 
     if (nuevoNombre && nuevoNombre !== motivoActual) {
       try {
-        await axios.put(`http://localhost:3001/api/motivos/${id}`, {
+        await axios.put(`/api/motivos/${id}`, {
           nombre: nuevoNombre.trim(),
         });
 
@@ -122,7 +122,7 @@ const GestionMotivos = ({ onBack }) => {
     if (result.isConfirmed) {
       try {
         const endpoint = estaActivo ? "desactivar" : "activar";
-        await axios.patch(`http://localhost:3001/api/motivos/${id}/${endpoint}`);
+        await axios.patch(`/api/motivos/${id}/${endpoint}`);
 
         Swal.fire({
           icon: "success",

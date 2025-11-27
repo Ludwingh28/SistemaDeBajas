@@ -15,7 +15,7 @@ const GestionSupervisores = ({ onBack }) => {
 
   const cargarSupervisores = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/supervisores");
+      const response = await axios.get("/api/supervisores");
       setSupervisores(response.data.supervisores || []);
     } catch (error) {
       console.error("Error cargando supervisores:", error);
@@ -51,7 +51,7 @@ const GestionSupervisores = ({ onBack }) => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post("http://localhost:3001/api/supervisores", {
+      const response = await axios.post("/api/supervisores", {
         nombre: nuevoSupervisor.nombre.trim(),
         codigo: nuevoSupervisor.codigo.trim(),
         creadoPor: "ADMIN"
@@ -114,7 +114,7 @@ const GestionSupervisores = ({ onBack }) => {
 
     if (formValues) {
       try {
-        await axios.put(`http://localhost:3001/api/supervisores/${id}/cambiar-hash`, {
+        await axios.put(`/api/supervisores/${id}/cambiar-hash`, {
           nuevoCodigo: formValues.nuevoCodigo,
           actualizadoPor: "ADMIN"
         });
@@ -151,7 +151,7 @@ const GestionSupervisores = ({ onBack }) => {
 
     if (result.isConfirmed) {
       try {
-        await axios.patch(`http://localhost:3001/api/supervisores/${id}/estado`, {
+        await axios.patch(`/api/supervisores/${id}/estado`, {
           activo: !estaActivo
         });
 

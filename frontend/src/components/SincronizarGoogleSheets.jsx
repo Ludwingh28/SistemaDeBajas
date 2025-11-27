@@ -17,8 +17,8 @@ const SincronizarGoogleSheets = ({ onBack }) => {
     try {
       setIsLoadingLogs(true);
       const [statsRes, logsRes] = await Promise.all([
-        axios.get("http://localhost:3001/api/planificacion/stats"),
-        axios.get("http://localhost:3001/api/planificacion/sync-logs?limit=10")
+        axios.get("/api/planificacion/stats"),
+        axios.get("/api/planificacion/sync-logs?limit=10")
       ]);
 
       setStats(statsRes.data.stats);
@@ -61,7 +61,7 @@ const SincronizarGoogleSheets = ({ onBack }) => {
       const supervisorCode = sessionStorage.getItem("supervisorCode");
 
       // Primero limpiar la tabla
-      await axios.delete("http://localhost:3001/api/planificacion/limpiar", {
+      await axios.delete("/api/planificacion/limpiar", {
         data: { codigoSupervisor: supervisorCode }
       });
 
@@ -69,7 +69,7 @@ const SincronizarGoogleSheets = ({ onBack }) => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Luego ejecutar migración
-      const response = await axios.post("http://localhost:3001/api/planificacion/migrar", {
+      const response = await axios.post("/api/planificacion/migrar", {
         codigoSupervisor: supervisorCode
       });
 
@@ -131,7 +131,7 @@ const SincronizarGoogleSheets = ({ onBack }) => {
 
     try {
       const supervisorCode = sessionStorage.getItem("supervisorCode");
-      const response = await axios.post("http://localhost:3001/api/planificacion/migrar", {
+      const response = await axios.post("/api/planificacion/migrar", {
         codigoSupervisor: supervisorCode
       });
 
@@ -193,7 +193,7 @@ const SincronizarGoogleSheets = ({ onBack }) => {
 
     try {
       const supervisorCode = sessionStorage.getItem("supervisorCode");
-      const response = await axios.post("http://localhost:3001/api/planificacion/sincronizar", {
+      const response = await axios.post("/api/planificacion/sincronizar", {
         codigoSupervisor: supervisorCode
       });
 

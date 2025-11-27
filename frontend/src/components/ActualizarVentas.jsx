@@ -17,7 +17,7 @@ const ActualizarVentas = ({ onBack }) => {
 
   const cargarEstadisticas = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/api/ventas/estadisticas");
+      const response = await axios.get("/api/ventas/estadisticas");
       setStats(response.data);
     } catch (error) {
       console.error("Error cargando estadísticas:", error);
@@ -91,7 +91,7 @@ const ActualizarVentas = ({ onBack }) => {
 
       setProgress(30);
 
-      const response = await axios.post("http://localhost:3001/api/actualizarBD", formData, {
+      const response = await axios.post("/api/actualizarBD", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
