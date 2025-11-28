@@ -18,7 +18,17 @@ const ActualizarVentas = ({ onBack }) => {
   const cargarEstadisticas = async () => {
     try {
       const response = await axios.get("/api/ventas/estadisticas");
-      setStats(response.data);
+      const data = response.data;
+
+      // Formatear fechas para mostrar solo YYYY-MM-DD sin hora
+      if (data.min_fecha) {
+        data.min_fecha = data.min_fecha.split('T')[0];
+      }
+      if (data.max_fecha) {
+        data.max_fecha = data.max_fecha.split('T')[0];
+      }
+
+      setStats(data);
     } catch (error) {
       console.error("Error cargando estadísticas:", error);
     }

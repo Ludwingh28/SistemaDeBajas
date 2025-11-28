@@ -57,7 +57,7 @@ function App() {
 
         {/* Ruta protegida para supervisores */}
         <Route
-          path="/api/index"
+          path="/admin"
           element={
             <ProtectedRoute>
               <AdminDashboard />

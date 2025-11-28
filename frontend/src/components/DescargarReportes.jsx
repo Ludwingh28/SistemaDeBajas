@@ -172,19 +172,19 @@ const DescargarReportes = ({ onBack }) => {
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-blue-600">{estadisticas.total}</p>
+                <p className="text-2xl font-bold text-blue-600">{estadisticas.total || 0}</p>
                 <p className="text-sm text-gray-600">Total</p>
               </div>
               <div className="bg-white rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-green-600">{estadisticas.aprobadas}</p>
+                <p className="text-2xl font-bold text-green-600">{estadisticas.aprobados || 0}</p>
                 <p className="text-sm text-gray-600">Aprobadas</p>
               </div>
               <div className="bg-white rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-red-600">{estadisticas.rechazadas}</p>
+                <p className="text-2xl font-bold text-red-600">{estadisticas.rechazados || 0}</p>
                 <p className="text-sm text-gray-600">Rechazadas</p>
               </div>
               <div className="bg-white rounded-lg p-4 text-center">
-                <p className="text-2xl font-bold text-yellow-600">{estadisticas.derivadas}</p>
+                <p className="text-2xl font-bold text-yellow-600">{estadisticas.manuales || 0}</p>
                 <p className="text-sm text-gray-600">Derivadas</p>
               </div>
             </div>
