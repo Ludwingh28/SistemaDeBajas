@@ -47,7 +47,17 @@ router.post(
 
       // 3. Guardar en base de datos MySQL (histórico)
       try {
-        const fotosRutas = req.files ? req.files.map(f => f.path) : [];
+        // Guardar solo la ruta relativa (uploads/filename.jpg) en lugar de la ruta completa de Windows
+        const fotosRutas = req.files ? req.files.map(f => {
+          // Extraer solo "uploads/filename.jpg" de la ruta completa
+          const pathParts = f.path.split(/[/\\]/);
+          const uploadsIndex = pathParts.indexOf('uploads');
+          if (uploadsIndex !== -1) {
+            return pathParts.slice(uploadsIndex).join('/');
+          }
+          return f.path; // Fallback a ruta completa si no se encuentra 'uploads'
+        }) : [];
+
         await Reporte.create({
           codigoCliente: resultado.codigoCliente,
           nombreCliente: resultado.nombreCliente,
@@ -59,7 +69,7 @@ router.post(
           razon: resultado.razon,
           fotosRutas: fotosRutas
         });
-        console.log('✓ Reporte guardado en MySQL');
+        console.log('✓ Reporte guardado en MySQL con rutas relativas:', fotosRutas);
       } catch (dbError) {
         console.error('⚠️  Error guardando en MySQL (continuando...):', dbError.message);
         // No interrumpir el proceso si falla MySQL
@@ -100,7 +110,7 @@ router.post(
         };
 
         console.log("❌ Solicitud RECHAZADA");
-      } else {
+      } else if (resultado.resultado === "MANUAL") {
         // CASO 3: Derivado a revisión manual
         responseData = {
           puedeInhabilitar: false,
@@ -114,12 +124,24 @@ router.post(
           instrucciones: [
             "1. La solicitud ha sido registrada en el sistema",
             "2. El caso será revisado por el equipo de Inteligencia Comercial",
-            "3. Recibirás una respuesta en las próximas 24-48 horas",
+            "3. Recibirás una respuesta en las próximas 2-4 horas",
             "4. Puedes consultar con tu supervisor para seguimiento",
           ],
         };
 
         console.log("⚠️  Solicitud DERIVADA A REVISIÓN MANUAL");
+      } else {
+        // CASO 4: Error u otro estado desconocido
+        responseData = {
+          puedeInhabilitar: false,
+          mensaje: "Error procesando solicitud",
+          codigo: codigoCliente,
+          nombreCliente: resultado.nombreCliente,
+          motivo: motivo,
+          razon: resultado.razon || "Estado desconocido del sistema",
+        };
+
+        console.log("❌ Estado desconocido:", resultado.resultado);
       }
 
       console.log("=".repeat(60) + "\n");

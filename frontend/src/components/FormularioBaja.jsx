@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Camera, Send, X } from "lucide-react";
 import { solicitudBajaAPI } from "../utils/api";
-import { showLoadingAlert, showSuccessAlert, showErrorAlert, showValidationError, showGeneralError } from "../utils/alerts";
+import { showLoadingAlert, showSuccessAlert, showErrorAlert, showValidationError, showGeneralError, showManualReviewAlert } from "../utils/alerts";
 
 const FormularioBaja = () => {
   const [formData, setFormData] = useState({

@@ -1,11 +1,12 @@
 import { upload, handleMulterError } from "../config/multer.js";
+import { compressImages } from "./imageCompression.js";
 
 // Middleware para manejar upload de fotos
 export const uploadPhotos = (req, res, next) => {
   // Usar multer para procesar los archivos
   const uploadMiddleware = upload.array("fotos", parseInt(process.env.MAX_FILES) || 5);
 
-  uploadMiddleware(req, res, (err) => {
+  uploadMiddleware(req, res, async (err) => {
     // Si hay error de multer, manejarlo
     if (err) {
       return handleMulterError(err, req, res, next);
@@ -21,7 +22,7 @@ export const uploadPhotos = (req, res, next) => {
     // Log de archivos subidos
     console.log(`📸 ${req.files.length} foto(s) subida(s) por ${req.body.codigoCliente || "desconocido"}`);
 
-    // Agregar info de archivos al request
+    // Agregar info de archivos al request (antes de comprimir)
     req.uploadedFiles = req.files.map((file) => ({
       filename: file.filename,
       path: file.path,
@@ -29,7 +30,8 @@ export const uploadPhotos = (req, res, next) => {
       mimetype: file.mimetype,
     }));
 
-    next();
+    // Comprimir imágenes antes de continuar
+    await compressImages(req, res, next);
   });
 };
 

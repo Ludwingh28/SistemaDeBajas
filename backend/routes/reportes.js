@@ -167,4 +167,201 @@ router.get("/estadisticas", async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/reportes/pendientes-aprobacion
+ * Obtener solicitudes MANUAL pendientes de aprobación
+ * Requiere autenticación de supervisor
+ *
+ * Query params (opcionales):
+ * - fechaInicio: string (YYYY-MM-DD)
+ * - fechaFin: string (YYYY-MM-DD)
+ */
+router.get(
+  "/pendientes-aprobacion",
+  authenticateSupervisor,
+  async (req, res, next) => {
+    try {
+      const { fechaInicio, fechaFin } = req.query;
+
+      let pendientes;
+
+      if (fechaInicio && fechaFin) {
+        // Validar formato de fecha
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(fechaInicio) || !dateRegex.test(fechaFin)) {
+          throw new AppError("Formato de fecha inválido. Use YYYY-MM-DD", 400);
+        }
+
+        console.log(`📋 Solicitudes pendientes: ${fechaInicio} a ${fechaFin}`);
+        pendientes = await Reporte.getPendingManualApprovalsByDateRange(fechaInicio, fechaFin);
+      } else {
+        console.log(`📋 Solicitudes pendientes: todas`);
+        pendientes = await Reporte.getPendingManualApprovals();
+      }
+
+      res.json({
+        success: true,
+        total: pendientes.length,
+        solicitudes: pendientes
+      });
+    } catch (error) {
+      console.error("Error obteniendo solicitudes pendientes:", error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * POST /api/reportes/aprobar/:id
+ * Aprobar o rechazar solicitud MANUAL
+ * Requiere autenticación de supervisor
+ *
+ * Body:
+ * - decision: "APROBADO" | "RECHAZADO"
+ * - comentario: string (opcional)
+ */
+router.post(
+  "/aprobar/:id",
+  authenticateSupervisor,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { decision, comentario } = req.body;
+      const supervisorNombre = req.supervisorNombre; // Del middleware de autenticación
+
+      // Validar decision
+      if (!['APROBADO', 'RECHAZADO'].includes(decision)) {
+        throw new AppError('Decisión inválida. Debe ser APROBADO o RECHAZADO', 400);
+      }
+
+      // Obtener la solicitud
+      const solicitud = await Reporte.getById(id);
+
+      if (!solicitud) {
+        throw new AppError('Solicitud no encontrada', 404);
+      }
+
+      if (solicitud.resultado !== 'MANUAL') {
+        throw new AppError('Solo se pueden aprobar/rechazar solicitudes MANUAL', 400);
+      }
+
+      // Aprobar o rechazar
+      const resultado = await Reporte.approveOrReject(
+        id,
+        decision,
+        supervisorNombre,
+        comentario
+      );
+
+      console.log(`✅ Solicitud ${id} ${decision} por ${supervisorNombre}`);
+
+      res.json({
+        success: true,
+        message: `Solicitud ${decision.toLowerCase()} exitosamente`,
+        decision,
+        solicitud: {
+          id: solicitud.id,
+          codigoCliente: solicitud.codigoCliente,
+          nombreCliente: solicitud.nombreCliente,
+          motivo: solicitud.motivo,
+          resultadoFinal: decision === 'APROBADO' ? 'SI' : 'NO',
+          supervisorAprobador: supervisorNombre,
+          comentario
+        }
+      });
+    } catch (error) {
+      console.error("Error aprobando/rechazando solicitud:", error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /api/reportes/ver-historico
+ * Ver reportes históricos en formato JSON (sin descargar Excel)
+ * Requiere autenticación de supervisor
+ */
+router.get(
+  "/ver-historico",
+  authenticateSupervisor,
+  async (req, res, next) => {
+    try {
+      const { fechaInicio, fechaFin } = req.query;
+
+      // Validar fechas
+      if (!fechaInicio || !fechaFin) {
+        throw new AppError("Debe proporcionar fechaInicio y fechaFin", 400);
+      }
+
+      // Validar formato de fecha
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(fechaInicio) || !dateRegex.test(fechaFin)) {
+        throw new AppError("Formato de fecha inválido. Use YYYY-MM-DD", 400);
+      }
+
+      console.log(`📊 Visualización de reportes: ${fechaInicio} a ${fechaFin}`);
+
+      // Obtener reportes desde MySQL
+      const reportes = await Reporte.getByDateRange(fechaInicio, fechaFin);
+
+      console.log(`   ✓ ${reportes.length} reportes encontrados para visualización`);
+
+      res.json({
+        success: true,
+        total: reportes.length,
+        fechaInicio,
+        fechaFin,
+        reportes: reportes.map(r => ({
+          id: r.id,
+          fechaSolicitud: r.fechaSolicitud,
+          codigoCliente: r.codigoCliente,
+          nombreCliente: r.nombreCliente,
+          motivo: r.motivo,
+          zona: r.zona || "N/A",
+          ruta: r.ruta || "N/A",
+          vendedor: r.vendedor || "N/A",
+          resultado: r.resultado,
+          razon: r.razon || "",
+          estadoAprobacion: r.estadoAprobacion,
+          supervisorAprobador: r.supervisorAprobador,
+          fechaAprobacion: r.fechaAprobacion,
+          comentarioAprobacion: r.comentarioAprobacion,
+          fotosRutas: r.fotosRutas || []
+        }))
+      });
+    } catch (error) {
+      console.error("❌ Error obteniendo reportes para visualización:", error);
+      next(error);
+    }
+  }
+);
+
+/**
+ * GET /api/reportes/:id
+ * Obtener detalle de solicitud por ID
+ * Requiere autenticación de supervisor
+ */
+router.get(
+  "/:id",
+  authenticateSupervisor,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const solicitud = await Reporte.getById(id);
+
+      if (!solicitud) {
+        throw new AppError('Solicitud no encontrada', 404);
+      }
+
+      res.json({
+        success: true,
+        solicitud
+      });
+    } catch (error) {
+      console.error("Error obteniendo solicitud:", error);
+      next(error);
+    }
+  }
+);
+
 export default router;

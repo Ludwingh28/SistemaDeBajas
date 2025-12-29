@@ -4,11 +4,15 @@ import { AppError } from "./errorHandler.js";
 // Middleware para verificar código de supervisor (usando BD)
 export const authenticateSupervisor = async (req, res, next) => {
   try {
-    const { codigoSupervisor } = req.body;
+    // Intentar obtener el código del header, body o query
+    const codigoSupervisor =
+      req.headers['x-supervisor-code'] ||
+      req.body?.codigoSupervisor ||
+      req.query?.codigoSupervisor;
 
     // Validar que venga el código
     if (!codigoSupervisor) {
-      throw new AppError("Código de supervisor requerido", 400);
+      throw new AppError("Código de supervisor requerido", 401);
     }
 
     // Verificar el código contra todos los supervisores activos
@@ -34,6 +38,7 @@ export const authenticateSupervisor = async (req, res, next) => {
 
     // Agregar info del supervisor al request
     req.supervisor = resultado.supervisor;
+    req.supervisorNombre = resultado.supervisor.nombre;
 
     // Continuar con la petición
     next();

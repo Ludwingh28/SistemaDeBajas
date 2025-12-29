@@ -156,11 +156,13 @@ export const validarClienteMySQL = async (codigoCliente, motivo) => {
       };
     }
 
-    // 10. CASO 3: Última venta <= 90 días
+    // 10. CASO 3: Última venta <= 90 días - Motivos que requieren revisión manual
     const esDuplicado = motivo.toLowerCase().includes("duplicado");
+    const esCierreDefinitivo = motivo.toLowerCase().includes("cierre definitivo");
+    const esCambioRubro = motivo.toLowerCase().includes("cambio de rubro");
 
-    if (esDuplicado) {
-      console.log(`   ⚠️  Resultado: DERIVADO (Duplicado con ventas recientes)`);
+    if (esDuplicado || esCierreDefinitivo || esCambioRubro) {
+      console.log(`   ⚠️  Resultado: MANUAL (${motivo})`);
       return {
         codigoCliente,
         nombreCliente,
@@ -168,7 +170,7 @@ export const validarClienteMySQL = async (codigoCliente, motivo) => {
         zona,
         ruta,
         vendedor,
-        resultado: "DERIVADO A REVISIÓN MANUAL",
+        resultado: "MANUAL",
         razon: `Derivado a revisión manual con Inteligencia Comercial. Última venta hace ${diasTranscurridos} días (${fechaFormateada})`,
       };
     }

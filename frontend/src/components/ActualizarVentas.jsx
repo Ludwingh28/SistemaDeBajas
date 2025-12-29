@@ -119,13 +119,20 @@ const ActualizarVentas = ({ onBack }) => {
         const ventasProcesadas = response.data.ventas?.insertados || response.data.ventas?.actualizados || 0;
         const clientesProcesados = response.data.clientes?.insertados || response.data.clientes?.actualizados || 0;
 
-        await Swal.fire({
-          icon: "success",
-          title: "¡Éxito!",
-          html: `
+        let mensaje = '<p>Base de datos actualizada correctamente</p>';
+
+        // Mostrar detalles solo si hay valores mayores a 0
+        if (ventasProcesadas > 0 || clientesProcesados > 0) {
+          mensaje = `
             <p><strong>Ventas:</strong> ${ventasProcesadas} registros procesados</p>
             <p><strong>Clientes:</strong> ${clientesProcesados} registros procesados</p>
-          `,
+          `;
+        }
+
+        await Swal.fire({
+          icon: "success",
+          title: "¡Actualización exitosa!",
+          html: mensaje,
         });
 
         setSelectedFile(null);

@@ -196,36 +196,71 @@ export const agregarSolicitudAlReporte = async (solicitud) => {
 };
 
 /**
- * Generar Excel del reporte completo para descarga de supervisores
+ * Generar Excel del reporte de HOY para descarga de supervisores
+ * Solo incluye la hoja del día actual
  * @returns {Buffer} - Buffer del Excel generado
  */
 export const generarReporteParaDescarga = async () => {
   try {
-    console.log("📥 Generando reporte para descarga...");
+    console.log("📥 Generando reporte de hoy para descarga...");
 
     const existe = await existeReporte();
+    const nombreHoja = getNombreHoja();
 
     if (!existe) {
       // Si no existe, crear un reporte vacío
       const workbook = crearNuevoReporte();
-      const worksheet = workbook.addWorksheet("Sin datos");
+      const worksheet = workbook.addWorksheet(nombreHoja);
 
-      worksheet.addRow(["No hay solicitudes registradas aún"]);
+      worksheet.addRow(["Código Cliente", "Nombre Cliente", "Motivo", "Zona", "Ruta", "Vendedor", "Resultado", "Razón"]);
+      worksheet.addRow(["No hay solicitudes registradas hoy"]);
+
+      aplicarEstilos(worksheet);
 
       return await workbook.xlsx.writeBuffer();
     }
 
     // Leer el reporte existente
-    const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(paths.reporteDisqualification);
+    const workbookCompleto = new ExcelJS.Workbook();
+    await workbookCompleto.xlsx.readFile(paths.reporteDisqualification);
+
+    // Buscar la hoja de hoy
+    const worksheetHoy = workbookCompleto.getWorksheet(nombreHoja);
+
+    // Crear nuevo workbook solo con la hoja de hoy
+    const workbookHoy = crearNuevoReporte();
+
+    if (!worksheetHoy) {
+      // No hay datos de hoy
+      const worksheet = workbookHoy.addWorksheet(nombreHoja);
+      worksheet.addRow(["Código Cliente", "Nombre Cliente", "Motivo", "Zona", "Ruta", "Vendedor", "Resultado", "Razón"]);
+      worksheet.addRow(["No hay solicitudes registradas hoy"]);
+      aplicarEstilos(worksheet);
+    } else {
+      // Copiar solo la hoja de hoy al nuevo workbook
+      const worksheetNuevo = workbookHoy.addWorksheet(nombreHoja);
+
+      // Copiar todas las filas (incluido header)
+      worksheetHoy.eachRow((row, rowNumber) => {
+        const nuevaFila = worksheetNuevo.getRow(rowNumber);
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          nuevaFila.getCell(colNumber).value = cell.value;
+        });
+        nuevaFila.commit();
+      });
+
+      // Aplicar estilos
+      aplicarEstilos(worksheetNuevo);
+      aplicarColoresPorResultado(worksheetNuevo);
+    }
 
     // Convertir a buffer
-    const buffer = await workbook.xlsx.writeBuffer();
+    const buffer = await workbookHoy.xlsx.writeBuffer();
 
-    console.log("✅ Reporte generado para descarga");
+    console.log(`✅ Reporte de hoy (${nombreHoja}) generado para descarga`);
     return buffer;
   } catch (error) {
-    console.error("❌ Error generando reporte para descarga:", error);
+    console.error("❌ Error generando reporte de hoy para descarga:", error);
     throw error;
   }
 };

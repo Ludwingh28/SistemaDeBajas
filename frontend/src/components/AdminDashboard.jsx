@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Tag, Database, Download, LogOut, Shield, Cloud } from "lucide-react";
+import { Tag, Database, Download, LogOut, Shield, Cloud, CheckSquare, FileText } from "lucide-react";
 import GestionMotivos from "./GestionMotivos";
 import ActualizarVentas from "./ActualizarVentas";
 import DescargarReportes from "./DescargarReportes";
+import VisualizarReportes from "./VisualizarReportes";
 import GestionSupervisores from "./GestionSupervisores";
 import SincronizarGoogleSheets from "./SincronizarGoogleSheets";
+import AprobarSolicitudes from "./AprobarSolicitudes";
 import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -19,11 +21,25 @@ const AdminDashboard = () => {
 
   const menuOptions = [
     {
+      id: "aprobar",
+      title: "Aprobar Solicitudes",
+      description: "Revisar y aprobar solicitudes MANUAL pendientes",
+      icon: CheckSquare,
+      color: "from-yellow-500 to-yellow-700",
+    },
+    {
+      id: "visualizar",
+      title: "Visualizar Reportes",
+      description: "Consultar historial de solicitudes en pantalla",
+      icon: FileText,
+      color: "from-purple-500 to-purple-700",
+    },
+    {
       id: "motivos",
       title: "Gestión de Motivos",
       description: "Agregar y administrar motivos de baja",
       icon: Tag,
-      color: "from-purple-500 to-purple-700",
+      color: "from-pink-500 to-pink-700",
     },
     {
       id: "ventas",
@@ -35,7 +51,7 @@ const AdminDashboard = () => {
     {
       id: "reportes",
       title: "Descargar Reportes",
-      description: "Exportar reportes históricos por rango de fechas",
+      description: "Exportar reportes históricos a Excel",
       icon: Download,
       color: "from-blue-500 to-blue-700",
     },
@@ -57,6 +73,10 @@ const AdminDashboard = () => {
 
   const renderContent = () => {
     switch (vistaActiva) {
+      case "aprobar":
+        return <AprobarSolicitudes onBack={() => setVistaActiva("menu")} />;
+      case "visualizar":
+        return <VisualizarReportes onBack={() => setVistaActiva("menu")} />;
       case "motivos":
         return <GestionMotivos onBack={() => setVistaActiva("menu")} />;
       case "ventas":

@@ -33,6 +33,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Servir archivos estáticos (uploads de fotos)
+app.use("/uploads", express.static("uploads"));
+
 // Rutas principales
 app.use("/api", routes);
 
