@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children }) => {
 
 function App() {
   return (
-    <Router>
+    <Router basename="/sistemadebajas">
       <Routes>
         {/* Ruta pública para vendedores */}
         <Route
