@@ -14,6 +14,8 @@ const VisualizarReportes = ({ onBack }) => {
   const [selectedReporte, setSelectedReporte] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [imagenAmpliada, setImagenAmpliada] = useState(null);
+  const [zonas, setZonas] = useState([]);
+  const [zonaSeleccionada, setZonaSeleccionada] = useState("TODOS");
 
   // Cerrar modales con tecla ESC
   useEffect(() => {
@@ -30,6 +32,21 @@ const VisualizarReportes = ({ onBack }) => {
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [imagenAmpliada, showModal]);
+
+  useEffect(() => {
+    cargarZonas();
+  }, []);
+
+  const cargarZonas = async () => {
+    try {
+      const response = await axios.get("/api/reportes/zonas/lista");
+      if (response.data.success) {
+        setZonas(response.data.zonas);
+      }
+    } catch (error) {
+      console.error("Error cargando zonas:", error);
+    }
+  };
 
   const cargarReportes = async () => {
     if (!fechaInicio || !fechaFin) {
@@ -62,6 +79,7 @@ const VisualizarReportes = ({ onBack }) => {
         params: {
           fechaInicio,
           fechaFin,
+          zona: zonaSeleccionada !== "TODOS" ? zonaSeleccionada : undefined
         }
       });
 
@@ -147,14 +165,14 @@ const VisualizarReportes = ({ onBack }) => {
           </div>
         </div>
 
-        {/* Filtros de Fecha */}
+        {/* Filtros de Fecha y Zona */}
         <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl p-6 mb-6">
           <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5" />
-            Seleccionar Rango de Fechas
+            Filtrar Reportes
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Fecha Inicio */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha Inicio</label>
@@ -177,6 +195,24 @@ const VisualizarReportes = ({ onBack }) => {
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
                 disabled={loadingReportes}
               />
+            </div>
+
+            {/* Zona */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Zona</label>
+              <select
+                value={zonaSeleccionada}
+                onChange={(e) => setZonaSeleccionada(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none transition-colors"
+                disabled={loadingReportes}
+              >
+                <option value="TODOS">Todas las Zonas</option>
+                {zonas.map((zona) => (
+                  <option key={zona.id} value={zona.codigo}>
+                    {zona.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Botón Buscar */}

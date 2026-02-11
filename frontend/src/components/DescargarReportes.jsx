@@ -11,9 +11,13 @@ const DescargarReportes = ({ onBack }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [estadisticas, setEstadisticas] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [zonas, setZonas] = useState([]);
+  const [zonaSeleccionadaHoy, setZonaSeleccionadaHoy] = useState("TODOS");
+  const [zonaSeleccionadaRango, setZonaSeleccionadaRango] = useState("TODOS");
 
   useEffect(() => {
     cargarEstadisticas();
+    cargarZonas();
   }, []);
 
   const cargarEstadisticas = async () => {
@@ -25,6 +29,17 @@ const DescargarReportes = ({ onBack }) => {
       console.error("Error cargando estadísticas:", error);
     } finally {
       setLoadingStats(false);
+    }
+  };
+
+  const cargarZonas = async () => {
+    try {
+      const response = await axios.get("/api/reportes/zonas/lista");
+      if (response.data.success) {
+        setZonas(response.data.zonas);
+      }
+    } catch (error) {
+      console.error("Error cargando zonas:", error);
     }
   };
 
@@ -58,6 +73,7 @@ const DescargarReportes = ({ onBack }) => {
           codigoSupervisor: supervisorCode,
           fechaInicio,
           fechaFin,
+          zona: zonaSeleccionadaRango !== "TODOS" ? zonaSeleccionadaRango : undefined
         },
         {
           responseType: "blob",
@@ -68,7 +84,8 @@ const DescargarReportes = ({ onBack }) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `reporte_historico_${fechaInicio}_a_${fechaFin}.xlsx`);
+      const zonaStr = zonaSeleccionadaRango !== "TODOS" ? `_zona_${zonaSeleccionadaRango}` : '';
+      link.setAttribute("download", `reporte_historico_${fechaInicio}_a_${fechaFin}${zonaStr}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -111,6 +128,7 @@ const DescargarReportes = ({ onBack }) => {
         "/api/reportes/descargar",
         {
           codigoSupervisor: supervisorCode,
+          zona: zonaSeleccionadaHoy !== "TODOS" ? zonaSeleccionadaHoy : undefined
         },
         {
           responseType: "blob",
@@ -120,7 +138,8 @@ const DescargarReportes = ({ onBack }) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `reporte_${hoy}.xlsx`);
+      const zonaStr = zonaSeleccionadaHoy !== "TODOS" ? `_zona_${zonaSeleccionadaHoy}` : '';
+      link.setAttribute("download", `reporte_${hoy}${zonaStr}.xlsx`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -196,6 +215,24 @@ const DescargarReportes = ({ onBack }) => {
         <div className="bg-linear-to-r from-blue-50 to-blue-100 rounded-xl p-6 mb-8">
           <h3 className="text-lg font-bold text-gray-800 mb-3">📅 Reporte de Hoy</h3>
           <p className="text-sm text-gray-600 mb-4">Descarga el reporte de solicitudes del día {hoy}</p>
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Zona</label>
+            <select
+              value={zonaSeleccionadaHoy}
+              onChange={(e) => setZonaSeleccionadaHoy(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+              disabled={isDownloading}
+            >
+              <option value="TODOS">Todas las Zonas</option>
+              {zonas.map((zona) => (
+                <option key={zona.id} value={zona.codigo}>
+                  {zona.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={descargarReporteHoy}
             disabled={isDownloading}
@@ -223,7 +260,7 @@ const DescargarReportes = ({ onBack }) => {
 
           <p className="text-sm text-gray-600 mb-6">Selecciona un rango de fechas para descargar el reporte histórico de inhabilitaciones</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Fecha Inicio */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha Inicio</label>
@@ -249,12 +286,32 @@ const DescargarReportes = ({ onBack }) => {
                 disabled={isDownloading}
               />
             </div>
+
+            {/* Zona */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Zona</label>
+              <select
+                value={zonaSeleccionadaRango}
+                onChange={(e) => setZonaSeleccionadaRango(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg
+                         focus:border-blue-500 focus:outline-none transition-colors"
+                disabled={isDownloading}
+              >
+                <option value="TODOS">Todas las Zonas</option>
+                {zonas.map((zona) => (
+                  <option key={zona.id} value={zona.codigo}>
+                    {zona.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Info */}
           <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded mb-6">
             <p className="text-sm text-green-900">
               <strong>Rango seleccionado:</strong> Del {fechaInicio} al {fechaFin}
+              {zonaSeleccionadaRango !== "TODOS" && ` - Zona: ${zonas.find(z => z.codigo === zonaSeleccionadaRango)?.nombre || zonaSeleccionadaRango}`}
             </p>
           </div>
 

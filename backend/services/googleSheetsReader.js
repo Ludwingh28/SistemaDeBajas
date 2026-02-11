@@ -4,12 +4,28 @@ import { cache, cacheKeys } from '../config/database.js';
 
 /**
  * Convierte una URL de Google Sheets en una URL de exportación CSV
+ * Soporta dos tipos de URL:
+ * 1. URL normal con gid: https://docs.google.com/spreadsheets/d/ID/edit#gid=123
+ * 2. URL de "Publicar en la web" como CSV: https://docs.google.com/spreadsheets/d/e/2PACX.../pub?output=csv
+ *
  * @param {string} sheetUrl - URL del Google Sheet
  * @returns {string} - URL de exportación CSV
  */
 function getCSVExportUrl(sheetUrl) {
   try {
-    // Extraer el ID del spreadsheet de la URL
+    // Si la URL ya es de "Publicar en la web" como CSV, usarla directamente
+    if (sheetUrl.includes('/pub') || sheetUrl.includes('output=csv')) {
+      console.log('   → Detectada URL de "Publicar en la web" (pub), usando directamente');
+      // Asegurarse que tenga output=csv
+      if (!sheetUrl.includes('output=csv')) {
+        // Agregar output=csv si no lo tiene
+        const separator = sheetUrl.includes('?') ? '&' : '?';
+        return `${sheetUrl}${separator}output=csv`;
+      }
+      return sheetUrl;
+    }
+
+    // Si es URL normal con /edit, extraer el ID y gid
     const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
     if (!match) {
       throw new Error('URL de Google Sheets inválida');
@@ -20,6 +36,8 @@ function getCSVExportUrl(sheetUrl) {
     // Extraer el GID (ID de la hoja) si existe
     const gidMatch = sheetUrl.match(/[#&]gid=([0-9]+)/);
     const gid = gidMatch ? gidMatch[1] : '0';
+
+    console.log(`   → Convertida URL normal a CSV (gid=${gid})`);
 
     // Construir URL de exportación CSV
     return `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=${gid}`;
@@ -125,9 +143,97 @@ export async function refreshRutasCache() {
   }
 }
 
+/**
+ * Lee los datos de las 3 hojas regionales de planificación
+ * @returns {Promise<Array>} - Datos combinados de las 3 regionales
+ */
+export async function readMultipleGoogleSheets() {
+  try {
+    const sheetUrls = {
+      santaCruz: process.env.GOOGLE_SHEET_SANTA_CRUZ,
+      cochabamba: process.env.GOOGLE_SHEET_COCHABAMBA,
+      laPaz: process.env.GOOGLE_SHEET_LA_PAZ
+    };
+
+    console.log('📊 Leyendo datos de las 3 regionales...');
+
+    const allData = [];
+    const errors = [];
+
+    // Leer Hoja Santa Cruz
+    if (sheetUrls.santaCruz && sheetUrls.santaCruz.trim() !== '') {
+      try {
+        console.log('  📄 Leyendo hoja Santa Cruz...');
+        const dataSC = await readGoogleSheet(sheetUrls.santaCruz);
+        console.log(`     ✓ ${dataSC.length} registros de Santa Cruz`);
+        allData.push(...dataSC);
+      } catch (error) {
+        console.error('  ❌ Error leyendo hoja Santa Cruz:', error.message);
+        errors.push({ regional: 'Santa Cruz', error: error.message });
+      }
+    } else {
+      console.warn('  ⚠️  URL de Santa Cruz no configurada');
+    }
+
+    // Leer Hoja Cochabamba
+    if (sheetUrls.cochabamba && sheetUrls.cochabamba.trim() !== '') {
+      try {
+        console.log('  📄 Leyendo hoja Cochabamba...');
+        const dataCB = await readGoogleSheet(sheetUrls.cochabamba);
+        console.log(`     ✓ ${dataCB.length} registros de Cochabamba`);
+        allData.push(...dataCB);
+      } catch (error) {
+        console.error('  ❌ Error leyendo hoja Cochabamba:', error.message);
+        errors.push({ regional: 'Cochabamba', error: error.message });
+      }
+    } else {
+      console.warn('  ⚠️  URL de Cochabamba no configurada');
+    }
+
+    // Leer Hoja La Paz
+    if (sheetUrls.laPaz && sheetUrls.laPaz.trim() !== '') {
+      try {
+        console.log('  📄 Leyendo hoja La Paz...');
+        const dataLP = await readGoogleSheet(sheetUrls.laPaz);
+        console.log(`     ✓ ${dataLP.length} registros de La Paz`);
+        allData.push(...dataLP);
+      } catch (error) {
+        console.error('  ❌ Error leyendo hoja La Paz:', error.message);
+        errors.push({ regional: 'La Paz', error: error.message });
+      }
+    } else {
+      console.warn('  ⚠️  URL de La Paz no configurada');
+    }
+
+    if (allData.length === 0) {
+      throw new Error('No se pudo leer ninguna hoja regional. Verifica las URLs configuradas.');
+    }
+
+    console.log(`✅ Total de registros combinados: ${allData.length}`);
+
+    if (errors.length > 0) {
+      console.warn(`⚠️  Se encontraron ${errors.length} error(es) al leer algunas hojas:`);
+      errors.forEach(e => console.warn(`   - ${e.regional}: ${e.error}`));
+    }
+
+    return {
+      data: allData,
+      errors: errors,
+      stats: {
+        total: allData.length,
+        errorsCount: errors.length
+      }
+    };
+  } catch (error) {
+    console.error('Error leyendo hojas regionales:', error.message);
+    throw error;
+  }
+}
+
 export default {
   readGoogleSheet,
   loadRutasVendedoresFromGoogleSheets,
   refreshRutasCache,
-  getCSVExportUrl
+  getCSVExportUrl,
+  readMultipleGoogleSheets
 };

@@ -4,6 +4,7 @@ import { reportesLimiter } from "../middleware/rateLimiter.js";
 import { generarReporteParaDescarga } from "../services/reportGenerator.js";
 import { AppError } from "../middleware/errorHandler.js";
 import Reporte from "../models/Reporte.js";
+import Zona from "../models/Zona.js";
 import ExcelJS from "exceljs";
 
 const router = express.Router();
@@ -14,6 +15,7 @@ const router = express.Router();
  *
  * Body:
  * - codigoSupervisor: string (requerido)
+ * - zona: string (código de zona o "TODOS", opcional)
  */
 router.post(
   "/descargar",
@@ -21,16 +23,20 @@ router.post(
   authenticateSupervisor, // Verificar código de supervisor
   async (req, res, next) => {
     try {
+      const { zona } = req.body;
+
       console.log("📥 Descarga de reporte solicitada");
       console.log(`   IP: ${req.ip}`);
       console.log(`   Timestamp: ${new Date().toISOString()}`);
+      if (zona) console.log(`   Zona: ${zona}`);
 
       // Generar Excel del reporte
-      const buffer = await generarReporteParaDescarga();
+      const buffer = await generarReporteParaDescarga(zona);
 
       // Nombre del archivo con timestamp
       const fecha = new Date().toISOString().split("T")[0];
-      const filename = `disqualification_report_${fecha}.xlsx`;
+      const zonaStr = zona && zona !== 'TODOS' ? `_zona_${zona}` : '';
+      const filename = `disqualification_report_${fecha}${zonaStr}.xlsx`;
 
       // Headers para descarga
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
@@ -56,6 +62,7 @@ router.post(
  * - codigoSupervisor: string (requerido)
  * - fechaInicio: string (YYYY-MM-DD, requerido)
  * - fechaFin: string (YYYY-MM-DD, requerido)
+ * - zona: string (código de zona o "TODOS", opcional)
  */
 router.post(
   "/descargar-historico",
@@ -63,7 +70,7 @@ router.post(
   authenticateSupervisor,
   async (req, res, next) => {
     try {
-      const { fechaInicio, fechaFin } = req.body;
+      const { fechaInicio, fechaFin, zona } = req.body;
 
       // Validar fechas
       if (!fechaInicio || !fechaFin) {
@@ -76,10 +83,10 @@ router.post(
         throw new AppError("Formato de fecha inválido. Use YYYY-MM-DD", 400);
       }
 
-      console.log(`📥 Descarga de reporte histórico: ${fechaInicio} a ${fechaFin}`);
+      console.log(`📥 Descarga de reporte histórico: ${fechaInicio} a ${fechaFin}${zona ? ` - Zona: ${zona}` : ''}`);
 
       // Obtener reportes desde MySQL
-      const reportes = await Reporte.getByDateRange(fechaInicio, fechaFin);
+      const reportes = await Reporte.getByDateRange(fechaInicio, fechaFin, zona);
 
       if (reportes.length === 0) {
         throw new AppError("No hay reportes en el rango de fechas seleccionado", 404);
@@ -130,7 +137,8 @@ router.post(
       const buffer = await workbook.xlsx.writeBuffer();
 
       // Enviar archivo
-      const filename = `reporte_historico_${fechaInicio}_a_${fechaFin}.xlsx`;
+      const zonaStr = zona && zona !== 'TODOS' ? `_zona_${zona}` : '';
+      const filename = `reporte_historico_${fechaInicio}_a_${fechaFin}${zonaStr}.xlsx`;
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
       res.setHeader("Content-Length", buffer.length);
@@ -175,13 +183,14 @@ router.get("/estadisticas", async (req, res, next) => {
  * Query params (opcionales):
  * - fechaInicio: string (YYYY-MM-DD)
  * - fechaFin: string (YYYY-MM-DD)
+ * - zona: string (código de zona o "TODOS")
  */
 router.get(
   "/pendientes-aprobacion",
   authenticateSupervisor,
   async (req, res, next) => {
     try {
-      const { fechaInicio, fechaFin } = req.query;
+      const { fechaInicio, fechaFin, zona } = req.query;
 
       let pendientes;
 
@@ -192,11 +201,11 @@ router.get(
           throw new AppError("Formato de fecha inválido. Use YYYY-MM-DD", 400);
         }
 
-        console.log(`📋 Solicitudes pendientes: ${fechaInicio} a ${fechaFin}`);
-        pendientes = await Reporte.getPendingManualApprovalsByDateRange(fechaInicio, fechaFin);
+        console.log(`📋 Solicitudes pendientes: ${fechaInicio} a ${fechaFin}${zona ? ` - Zona: ${zona}` : ''}`);
+        pendientes = await Reporte.getPendingManualApprovalsByDateRange(fechaInicio, fechaFin, zona);
       } else {
-        console.log(`📋 Solicitudes pendientes: todas`);
-        pendientes = await Reporte.getPendingManualApprovals();
+        console.log(`📋 Solicitudes pendientes: todas${zona ? ` - Zona: ${zona}` : ''}`);
+        pendientes = await Reporte.getPendingManualApprovals(zona);
       }
 
       res.json({
@@ -277,16 +286,46 @@ router.post(
 );
 
 /**
+ * GET /api/reportes/zonas/lista
+ * Obtener lista de todas las zonas disponibles
+ */
+router.get(
+  "/zonas/lista",
+  async (req, res, next) => {
+    try {
+      const zonas = await Zona.getAll();
+
+      res.json({
+        success: true,
+        zonas: zonas.map(z => ({
+          id: z.id,
+          codigo: z.codigo,
+          nombre: z.nombre || z.codigo
+        }))
+      });
+    } catch (error) {
+      console.error("Error obteniendo zonas:", error);
+      next(error);
+    }
+  }
+);
+
+/**
  * GET /api/reportes/ver-historico
  * Ver reportes históricos en formato JSON (sin descargar Excel)
  * Requiere autenticación de supervisor
+ *
+ * Query params:
+ * - fechaInicio: string (YYYY-MM-DD, requerido)
+ * - fechaFin: string (YYYY-MM-DD, requerido)
+ * - zona: string (código de zona o "TODOS", opcional)
  */
 router.get(
   "/ver-historico",
   authenticateSupervisor,
   async (req, res, next) => {
     try {
-      const { fechaInicio, fechaFin } = req.query;
+      const { fechaInicio, fechaFin, zona } = req.query;
 
       // Validar fechas
       if (!fechaInicio || !fechaFin) {
@@ -299,10 +338,10 @@ router.get(
         throw new AppError("Formato de fecha inválido. Use YYYY-MM-DD", 400);
       }
 
-      console.log(`📊 Visualización de reportes: ${fechaInicio} a ${fechaFin}`);
+      console.log(`📊 Visualización de reportes: ${fechaInicio} a ${fechaFin}${zona ? ` - Zona: ${zona}` : ''}`);
 
       // Obtener reportes desde MySQL
-      const reportes = await Reporte.getByDateRange(fechaInicio, fechaFin);
+      const reportes = await Reporte.getByDateRange(fechaInicio, fechaFin, zona);
 
       console.log(`   ✓ ${reportes.length} reportes encontrados para visualización`);
 
@@ -311,6 +350,7 @@ router.get(
         total: reportes.length,
         fechaInicio,
         fechaFin,
+        zona: zona || 'TODOS',
         reportes: reportes.map(r => ({
           id: r.id,
           fechaSolicitud: r.fechaSolicitud,

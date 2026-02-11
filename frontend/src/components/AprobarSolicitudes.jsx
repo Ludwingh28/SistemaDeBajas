@@ -14,10 +14,27 @@ const AprobarSolicitudes = ({ onBack }) => {
   const [fotoAmpliada, setFotoAmpliada] = useState(null);
   const [fechaInicio, setFechaInicio] = useState(hoy);
   const [fechaFin, setFechaFin] = useState(hoy);
+  const [zonas, setZonas] = useState([]);
+  const [zonaSeleccionada, setZonaSeleccionada] = useState("TODOS");
+
+  useEffect(() => {
+    cargarZonas();
+  }, []);
 
   useEffect(() => {
     cargarSolicitudesPendientes();
-  }, [fechaInicio, fechaFin]);
+  }, [fechaInicio, fechaFin, zonaSeleccionada]);
+
+  const cargarZonas = async () => {
+    try {
+      const response = await axios.get("/api/reportes/zonas/lista");
+      if (response.data.success) {
+        setZonas(response.data.zonas);
+      }
+    } catch (error) {
+      console.error("Error cargando zonas:", error);
+    }
+  };
 
   const cargarSolicitudesPendientes = async () => {
     try {
@@ -32,7 +49,8 @@ const AprobarSolicitudes = ({ onBack }) => {
         },
         params: {
           fechaInicio,
-          fechaFin
+          fechaFin,
+          zona: zonaSeleccionada !== "TODOS" ? zonaSeleccionada : undefined
         }
       });
 
@@ -154,13 +172,13 @@ const AprobarSolicitudes = ({ onBack }) => {
           </div>
         </div>
 
-        {/* Filtro de Fechas */}
+        {/* Filtro de Fechas y Zona */}
         <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-xl p-5 mb-6">
           <h3 className="text-md font-bold text-gray-800 mb-3 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-yellow-600" />
-            Filtrar por Rango de Fechas
+            Filtrar Solicitudes
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Fecha Inicio</label>
               <input
@@ -178,6 +196,21 @@ const AprobarSolicitudes = ({ onBack }) => {
                 onChange={(e) => setFechaFin(e.target.value)}
                 className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none transition-colors"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Zona</label>
+              <select
+                value={zonaSeleccionada}
+                onChange={(e) => setZonaSeleccionada(e.target.value)}
+                className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:outline-none transition-colors"
+              >
+                <option value="TODOS">Todas las Zonas</option>
+                {zonas.map((zona) => (
+                  <option key={zona.id} value={zona.codigo}>
+                    {zona.nombre}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

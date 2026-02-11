@@ -255,17 +255,22 @@ const SincronizarGoogleSheets = ({ onBack }) => {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-gray-800">Sincronizar Google Sheets</h2>
-            <p className="text-gray-600 text-sm">Actualiza los datos de planificación de rutas manualmente</p>
+            <p className="text-gray-600 text-sm">Actualiza los datos de planificación de rutas desde las 3 regionales</p>
           </div>
         </div>
 
         {/* Info */}
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
           <p className="text-sm text-blue-900">
-            <strong>¿Qué se sincroniza?</strong> Datos de planificación de rutas (zonas, rutas, vendedores) desde la hoja de Google Sheets configurada.
+            <strong>¿Qué se sincroniza?</strong> Datos de planificación de rutas (zonas, rutas, vendedores) desde las <strong>3 hojas regionales</strong> configuradas en Google Sheets:
           </p>
+          <ul className="text-xs text-blue-800 mt-2 ml-4 list-disc space-y-1">
+            <li><strong>Regional Santa Cruz</strong> - Todas las zonas incluidas en la hoja</li>
+            <li><strong>Regional Cochabamba</strong> - Todas las zonas incluidas en la hoja</li>
+            <li><strong>Regional La Paz</strong> - Todas las zonas incluidas en la hoja</li>
+          </ul>
           <p className="text-xs text-blue-800 mt-2">
-            <strong>Nota:</strong> El sistema también sincroniza automáticamente a las <strong>6:00 AM</strong> y <strong>7:00 PM</strong> todos los días.
+            <strong>Nota:</strong> El sistema lee todas las zonas de cada hoja sin filtros. También sincroniza automáticamente a las <strong>6:00 AM</strong> y <strong>7:00 PM</strong> todos los días.
           </p>
         </div>
 

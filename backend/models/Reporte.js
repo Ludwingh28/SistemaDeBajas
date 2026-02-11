@@ -41,12 +41,11 @@ class Reporte {
   }
 
   // Obtener reportes por rango de fechas
-  static async getByDateRange(fechaInicio, fechaFin) {
+  static async getByDateRange(fechaInicio, fechaFin, zona = null) {
     try {
-      console.log(`📊 Buscando reportes desde ${fechaInicio} hasta ${fechaFin}`);
+      console.log(`📊 Buscando reportes desde ${fechaInicio} hasta ${fechaFin}${zona ? ` en zona ${zona}` : ''}`);
 
-      const reportes = await query(
-        `SELECT
+      let sql = `SELECT
           id,
           codigo_cliente as codigoCliente,
           nombre_cliente as nombreCliente,
@@ -60,10 +59,18 @@ class Reporte {
           fecha_solicitud as fechaSolicitud,
           fecha_creacion as fechaCreacion
         FROM reportes
-        WHERE DATE(fecha_solicitud) BETWEEN ? AND ?
-        ORDER BY fecha_solicitud DESC`,
-        [fechaInicio, fechaFin]
-      );
+        WHERE DATE(fecha_solicitud) BETWEEN ? AND ?`;
+
+      const params = [fechaInicio, fechaFin];
+
+      if (zona && zona !== 'TODOS') {
+        sql += ' AND zona = ?';
+        params.push(zona);
+      }
+
+      sql += ' ORDER BY fecha_solicitud DESC';
+
+      const reportes = await query(sql, params);
 
       console.log(`   ✓ ${reportes.length} reportes encontrados`);
 
@@ -96,10 +103,10 @@ class Reporte {
   }
 
   // Obtener reportes del día actual
-  static async getToday() {
+  static async getToday(zona = null) {
     try {
       const hoy = new Date().toISOString().split('T')[0];
-      return await this.getByDateRange(hoy, hoy);
+      return await this.getByDateRange(hoy, hoy, zona);
     } catch (error) {
       console.error('Error obteniendo reportes de hoy:', error);
       throw error;
@@ -245,10 +252,9 @@ class Reporte {
   }
 
   // Obtener solicitudes MANUAL pendientes de aprobación
-  static async getPendingManualApprovals() {
+  static async getPendingManualApprovals(zona = null) {
     try {
-      const reportes = await query(
-        `SELECT
+      let sql = `SELECT
           id,
           codigo_cliente as codigoCliente,
           nombre_cliente as nombreCliente,
@@ -266,9 +272,18 @@ class Reporte {
           fecha_aprobacion as fechaAprobacion,
           comentario_aprobacion as comentarioAprobacion
         FROM reportes
-        WHERE resultado = 'MANUAL' AND (estado_aprobacion = 'PENDIENTE' OR estado_aprobacion IS NULL)
-        ORDER BY fecha_solicitud DESC`
-      );
+        WHERE resultado = 'MANUAL' AND (estado_aprobacion = 'PENDIENTE' OR estado_aprobacion IS NULL)`;
+
+      const params = [];
+
+      if (zona && zona !== 'TODOS') {
+        sql += ' AND zona = ?';
+        params.push(zona);
+      }
+
+      sql += ' ORDER BY fecha_solicitud DESC';
+
+      const reportes = await query(sql, params);
 
       return reportes.map(r => {
         let fotosRutas = [];
@@ -293,10 +308,9 @@ class Reporte {
   }
 
   // Obtener solicitudes MANUAL pendientes de aprobación por rango de fechas
-  static async getPendingManualApprovalsByDateRange(fechaInicio, fechaFin) {
+  static async getPendingManualApprovalsByDateRange(fechaInicio, fechaFin, zona = null) {
     try {
-      const reportes = await query(
-        `SELECT
+      let sql = `SELECT
           id,
           codigo_cliente as codigoCliente,
           nombre_cliente as nombreCliente,
@@ -316,10 +330,18 @@ class Reporte {
         FROM reportes
         WHERE resultado = 'MANUAL'
           AND (estado_aprobacion = 'PENDIENTE' OR estado_aprobacion IS NULL)
-          AND DATE(fecha_solicitud) BETWEEN ? AND ?
-        ORDER BY fecha_solicitud DESC`,
-        [fechaInicio, fechaFin]
-      );
+          AND DATE(fecha_solicitud) BETWEEN ? AND ?`;
+
+      const params = [fechaInicio, fechaFin];
+
+      if (zona && zona !== 'TODOS') {
+        sql += ' AND zona = ?';
+        params.push(zona);
+      }
+
+      sql += ' ORDER BY fecha_solicitud DESC';
+
+      const reportes = await query(sql, params);
 
       return reportes.map(r => {
         let fotosRutas = [];

@@ -198,66 +198,53 @@ export const agregarSolicitudAlReporte = async (solicitud) => {
 /**
  * Generar Excel del reporte de HOY para descarga de supervisores
  * Solo incluye la hoja del día actual
+ * @param {string} zona - Código de zona o "TODOS" (opcional)
  * @returns {Buffer} - Buffer del Excel generado
  */
-export const generarReporteParaDescarga = async () => {
+export const generarReporteParaDescarga = async (zona = null) => {
   try {
-    console.log("📥 Generando reporte de hoy para descarga...");
+    console.log(`📥 Generando reporte de hoy para descarga${zona ? ` - Zona: ${zona}` : ''}...`);
 
-    const existe = await existeReporte();
+    // Importar Reporte dinámicamente para evitar dependencias circulares
+    const { default: Reporte } = await import('../models/Reporte.js');
+
+    // Obtener reportes de hoy desde MySQL con filtro de zona
+    const reportes = await Reporte.getToday(zona);
+
     const nombreHoja = getNombreHoja();
+    const workbook = crearNuevoReporte();
+    const worksheet = workbook.addWorksheet(nombreHoja);
 
-    if (!existe) {
-      // Si no existe, crear un reporte vacío
-      const workbook = crearNuevoReporte();
-      const worksheet = workbook.addWorksheet(nombreHoja);
+    // Agregar headers
+    worksheet.addRow(["Código Cliente", "Nombre Cliente", "Motivo", "Zona", "Ruta", "Vendedor", "Resultado", "Razón"]);
 
-      worksheet.addRow(["Código Cliente", "Nombre Cliente", "Motivo", "Zona", "Ruta", "Vendedor", "Resultado", "Razón"]);
+    if (reportes.length === 0) {
+      // No hay datos
       worksheet.addRow(["No hay solicitudes registradas hoy"]);
-
-      aplicarEstilos(worksheet);
-
-      return await workbook.xlsx.writeBuffer();
-    }
-
-    // Leer el reporte existente
-    const workbookCompleto = new ExcelJS.Workbook();
-    await workbookCompleto.xlsx.readFile(paths.reporteDisqualification);
-
-    // Buscar la hoja de hoy
-    const worksheetHoy = workbookCompleto.getWorksheet(nombreHoja);
-
-    // Crear nuevo workbook solo con la hoja de hoy
-    const workbookHoy = crearNuevoReporte();
-
-    if (!worksheetHoy) {
-      // No hay datos de hoy
-      const worksheet = workbookHoy.addWorksheet(nombreHoja);
-      worksheet.addRow(["Código Cliente", "Nombre Cliente", "Motivo", "Zona", "Ruta", "Vendedor", "Resultado", "Razón"]);
-      worksheet.addRow(["No hay solicitudes registradas hoy"]);
-      aplicarEstilos(worksheet);
     } else {
-      // Copiar solo la hoja de hoy al nuevo workbook
-      const worksheetNuevo = workbookHoy.addWorksheet(nombreHoja);
-
-      // Copiar todas las filas (incluido header)
-      worksheetHoy.eachRow((row, rowNumber) => {
-        const nuevaFila = worksheetNuevo.getRow(rowNumber);
-        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          nuevaFila.getCell(colNumber).value = cell.value;
-        });
-        nuevaFila.commit();
+      // Agregar datos
+      reportes.forEach(r => {
+        worksheet.addRow([
+          r.codigoCliente,
+          r.nombreCliente,
+          r.motivo,
+          r.zona || "N/A",
+          r.ruta || "N/A",
+          r.vendedor || "N/A",
+          r.resultado,
+          r.razon || ""
+        ]);
       });
-
-      // Aplicar estilos
-      aplicarEstilos(worksheetNuevo);
-      aplicarColoresPorResultado(worksheetNuevo);
     }
+
+    // Aplicar estilos
+    aplicarEstilos(worksheet);
+    aplicarColoresPorResultado(worksheet);
 
     // Convertir a buffer
-    const buffer = await workbookHoy.xlsx.writeBuffer();
+    const buffer = await workbook.xlsx.writeBuffer();
 
-    console.log(`✅ Reporte de hoy (${nombreHoja}) generado para descarga`);
+    console.log(`✅ Reporte de hoy (${nombreHoja}) generado para descarga - ${reportes.length} registros`);
     return buffer;
   } catch (error) {
     console.error("❌ Error generando reporte de hoy para descarga:", error);

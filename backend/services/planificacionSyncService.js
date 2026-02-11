@@ -3,7 +3,7 @@ import Zona from '../models/Zona.js';
 import Vendedor from '../models/Vendedor.js';
 import Dia from '../models/Dia.js';
 import SyncLog from '../models/SyncLog.js';
-import { readGoogleSheet } from './googleSheetsReader.js';
+import { readGoogleSheet, readMultipleGoogleSheets } from './googleSheetsReader.js';
 import { parse } from 'csv-parse/sync';
 import fs from 'fs';
 import path from 'path';
@@ -13,22 +13,37 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /**
- * Lee los datos de planificación desde Google Sheets o CSV local
+ * Lee los datos de planificación desde Google Sheets (3 hojas regionales) o CSV local
  */
 async function leerDatosPlanificacion() {
   try {
-    const googleSheetUrl = process.env.GOOGLE_SHEET_URL;
+    // Verificar si hay URLs configuradas para las hojas regionales
+    const sheetUrls = {
+      santaCruz: process.env.GOOGLE_SHEET_SANTA_CRUZ,
+      cochabamba: process.env.GOOGLE_SHEET_COCHABAMBA,
+      laPaz: process.env.GOOGLE_SHEET_LA_PAZ
+    };
 
-    // Intentar leer desde Google Sheets
-    if (googleSheetUrl && googleSheetUrl.trim() !== '') {
+    const hayUrlsConfiguradas = Object.values(sheetUrls).some(url => url && url.trim() !== '');
+
+    // Intentar leer desde Google Sheets (3 hojas regionales)
+    if (hayUrlsConfiguradas) {
       try {
-        console.log('📊 Intentando leer desde Google Sheets...');
-        const data = await readGoogleSheet(googleSheetUrl);
-        console.log(`✓ Datos leídos desde Google Sheets: ${data.length} registros`);
-        return data;
+        console.log('📊 Intentando leer desde Google Sheets (3 regionales)...');
+        const result = await readMultipleGoogleSheets();
+        console.log(`✓ Datos leídos desde Google Sheets: ${result.data.length} registros`);
+
+        if (result.errors.length > 0) {
+          console.warn(`⚠️  Advertencia: ${result.errors.length} hoja(s) no pudieron ser leídas`);
+        }
+
+        return result.data;
       } catch (error) {
         console.warn('⚠️  No se pudo acceder a Google Sheets, usando CSV local de respaldo');
+        console.warn('   Error:', error.message);
       }
+    } else {
+      console.warn('⚠️  No hay URLs de Google Sheets configuradas, usando CSV local');
     }
 
     // Fallback: leer desde CSV local
