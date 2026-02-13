@@ -19,6 +19,20 @@ CREATE TABLE IF NOT EXISTS motivos (
   INDEX idx_nombre (nombre)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de supervisores (para autenticación)
+CREATE TABLE IF NOT EXISTS supervisores (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre VARCHAR(100) NOT NULL UNIQUE,
+  codigo_hash VARCHAR(255) NOT NULL,
+  activo BOOLEAN DEFAULT TRUE,
+  creado_por VARCHAR(100) DEFAULT 'SISTEMA',
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  ultimo_acceso TIMESTAMP NULL,
+  INDEX idx_nombre (nombre),
+  INDEX idx_activo (activo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tabla de reportes (historial de solicitudes de baja)
 CREATE TABLE IF NOT EXISTS reportes (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,10 +47,15 @@ CREATE TABLE IF NOT EXISTS reportes (
   fotos_rutas JSON,
   fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  estado_aprobacion ENUM('PENDIENTE', 'APROBADO', 'RECHAZADO') DEFAULT 'PENDIENTE',
+  supervisor_aprobador VARCHAR(100),
+  fecha_aprobacion TIMESTAMP NULL,
+  comentario_aprobacion TEXT,
   INDEX idx_fecha_solicitud (fecha_solicitud),
   INDEX idx_codigo_cliente (codigo_cliente),
   INDEX idx_resultado (resultado),
-  INDEX idx_fecha_creacion (fecha_creacion)
+  INDEX idx_fecha_creacion (fecha_creacion),
+  INDEX idx_estado_aprobacion (estado_aprobacion)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Insertar motivos iniciales desde motivos.txt

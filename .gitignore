@@ -116,3 +116,6 @@ MIGRACION_GOOGLE_SHEETS.md
 INSTRUCCIONES_MIGRACION.md
 PRODUCCION_CHECKLIST.md
 *.conf
+*.bat
+*.md
+detener-sistema.bat
