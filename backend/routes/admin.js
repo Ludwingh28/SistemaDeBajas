@@ -26,7 +26,7 @@ const upload = multer({
 
 /**
  * POST /api/actualizarBD
- * Procesar archivo Excel y actualizar base de datos
+ * Procesar archivo Excel y actualizar base de datos (AMBOS: ventas y clientes)
  */
 router.post('/actualizarBD', upload.single('file'), async (req, res, next) => {
   try {
@@ -39,16 +39,18 @@ router.post('/actualizarBD', upload.single('file'), async (req, res, next) => {
 
     const reemplazar = req.body.reemplazar === 'true';
 
-    console.log('\n📥 Nueva solicitud de actualización de BD');
+    console.log('\n📥 Nueva solicitud de actualización de BD (COMPLETA)');
     console.log(`   Archivo: ${req.file.originalname}`);
     console.log(`   Tamaño: ${(req.file.size / 1024 / 1024).toFixed(2)} MB`);
     console.log(`   Modo: ${reemplazar ? 'REEMPLAZAR' : 'AGREGAR/ACTUALIZAR'}`);
 
-    // Importar ventas y clientes en paralelo
-    const [resultadoVentas, resultadoClientes] = await Promise.all([
-      importarVentasDesdeExcel(req.file.path, reemplazar),
-      importarClientesDesdeExcel(req.file.path, reemplazar)
-    ]);
+    // Importar SECUENCIALMENTE para reducir carga de memoria
+    // Primero ventas (lo más pesado)
+    console.log('⏳ Paso 1/2: Importando ventas...');
+    const resultadoVentas = await importarVentasDesdeExcel(req.file.path, reemplazar, req.file.originalname);
+
+    console.log('⏳ Paso 2/2: Importando clientes...');
+    const resultadoClientes = await importarClientesDesdeExcel(req.file.path, reemplazar, req.file.originalname);
 
     // Eliminar archivo temporal
     const fs = await import('fs/promises');
@@ -58,6 +60,8 @@ router.post('/actualizarBD', upload.single('file'), async (req, res, next) => {
       console.warn('No se pudo eliminar archivo temporal:', e.message);
     }
 
+    console.log('✅ Importación completada exitosamente\n');
+
     res.json({
       success: resultadoVentas.success && resultadoClientes.success,
       ventas: resultadoVentas,
@@ -65,6 +69,90 @@ router.post('/actualizarBD', upload.single('file'), async (req, res, next) => {
     });
   } catch (error) {
     console.error('❌ Error en actualización de BD:', error);
+    next(error);
+  }
+});
+
+/**
+ * POST /api/importar-ventas
+ * Importar SOLO ventas desde Excel
+ */
+router.post('/importar-ventas', upload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se recibió ningún archivo'
+      });
+    }
+
+    const reemplazar = req.body.reemplazar === 'true';
+
+    console.log('\n📥 Importación de VENTAS');
+    console.log(`   Archivo: ${req.file.originalname}`);
+    console.log(`   Tamaño: ${(req.file.size / 1024 / 1024).toFixed(2)} MB`);
+    console.log(`   Modo: ${reemplazar ? 'REEMPLAZAR' : 'AGREGAR/ACTUALIZAR'}`);
+
+    const resultado = await importarVentasDesdeExcel(req.file.path, reemplazar, req.file.originalname);
+
+    // Eliminar archivo temporal
+    const fs = await import('fs/promises');
+    try {
+      await fs.unlink(req.file.path);
+    } catch (e) {
+      console.warn('No se pudo eliminar archivo temporal:', e.message);
+    }
+
+    console.log('✅ Importación de ventas completada\n');
+
+    res.json({
+      success: resultado.success,
+      ventas: resultado
+    });
+  } catch (error) {
+    console.error('❌ Error importando ventas:', error);
+    next(error);
+  }
+});
+
+/**
+ * POST /api/importar-clientes
+ * Importar SOLO clientes desde Excel
+ */
+router.post('/importar-clientes', upload.single('file'), async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se recibió ningún archivo'
+      });
+    }
+
+    const reemplazar = req.body.reemplazar === 'true';
+
+    console.log('\n📥 Importación de CLIENTES');
+    console.log(`   Archivo: ${req.file.originalname}`);
+    console.log(`   Tamaño: ${(req.file.size / 1024 / 1024).toFixed(2)} MB`);
+    console.log(`   Modo: ${reemplazar ? 'REEMPLAZAR' : 'AGREGAR/ACTUALIZAR'}`);
+
+    const resultado = await importarClientesDesdeExcel(req.file.path, reemplazar);
+
+    // Eliminar archivo temporal
+    const fs = await import('fs/promises');
+    try {
+      await fs.unlink(req.file.path);
+    } catch (e) {
+      console.warn('No se pudo eliminar archivo temporal:', e.message);
+    }
+
+    console.log('✅ Importación de clientes completada\n');
+
+    res.json({
+      success: resultado.success,
+      clientes: resultado
+    });
+  } catch (error) {
+    console.error('❌ Error importando clientes:', error);
     next(error);
   }
 });

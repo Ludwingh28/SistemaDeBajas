@@ -79,6 +79,15 @@ frontend/.vite/
 scripts/test*.js
 *.dev.*
 
+# Scripts de prueba y debug
+backend/inspect-*.js
+backend/test-*.js
+
+# Archivos Excel de prueba
+backend/data/*.xls
+backend/data/*.xlsx
+!backend/data/.gitkeep
+
 # Certificados y claves
 *.pem
 *.key

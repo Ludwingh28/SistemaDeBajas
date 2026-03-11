@@ -10,6 +10,7 @@ const ActualizarVentas = ({ onBack }) => {
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState({ total: 0, min_fecha: null, max_fecha: null, dias: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [tipoImportacion, setTipoImportacion] = useState("ambos"); // 'ambos', 'ventas', 'clientes'
 
   useEffect(() => {
     cargarEstadisticas();
@@ -101,7 +102,15 @@ const ActualizarVentas = ({ onBack }) => {
 
       setProgress(30);
 
-      const response = await axios.post("/api/actualizarBD", formData, {
+      // Seleccionar endpoint según tipo de importación
+      let endpoint = "/api/actualizarBD"; // ambos
+      if (tipoImportacion === "ventas") {
+        endpoint = "/api/importar-ventas";
+      } else if (tipoImportacion === "clientes") {
+        endpoint = "/api/importar-clientes";
+      }
+
+      const response = await axios.post(endpoint, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -116,22 +125,26 @@ const ActualizarVentas = ({ onBack }) => {
       if (response.data.success) {
         setProgress(100);
 
-        const ventasProcesadas = response.data.ventas?.insertados || response.data.ventas?.actualizados || 0;
-        const clientesProcesados = response.data.clientes?.insertados || response.data.clientes?.actualizados || 0;
+        const ventasProcesadas = response.data.ventas?.registros || response.data.ventas?.insertados || 0;
+        const clientesProcesados = response.data.clientes?.registros || response.data.clientes?.insertados || 0;
 
-        let mensaje = '<p>Base de datos actualizada correctamente</p>';
+        let mensaje = '<p>Importación completada correctamente</p>';
 
-        // Mostrar detalles solo si hay valores mayores a 0
-        if (ventasProcesadas > 0 || clientesProcesados > 0) {
+        // Mostrar detalles según tipo de importación
+        if (tipoImportacion === "ventas") {
+          mensaje = `<p><strong>Ventas:</strong> ${ventasProcesadas.toLocaleString()} registros procesados</p>`;
+        } else if (tipoImportacion === "clientes") {
+          mensaje = `<p><strong>Clientes:</strong> ${clientesProcesados.toLocaleString()} registros procesados</p>`;
+        } else {
           mensaje = `
-            <p><strong>Ventas:</strong> ${ventasProcesadas} registros procesados</p>
-            <p><strong>Clientes:</strong> ${clientesProcesados} registros procesados</p>
+            <p><strong>Ventas:</strong> ${ventasProcesadas.toLocaleString()} registros procesados</p>
+            <p><strong>Clientes:</strong> ${clientesProcesados.toLocaleString()} registros procesados</p>
           `;
         }
 
         await Swal.fire({
           icon: "success",
-          title: "¡Actualización exitosa!",
+          title: "¡Importación exitosa!",
           html: mensaje,
         });
 
@@ -199,10 +212,69 @@ const ActualizarVentas = ({ onBack }) => {
           </div>
         </div>
 
+        {/* Tipo de Importación */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Tipo de Importación:</label>
+          <div className="grid grid-cols-3 gap-4">
+            <button
+              onClick={() => setTipoImportacion("ambos")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                tipoImportacion === "ambos"
+                  ? "border-green-500 bg-green-50 text-green-700 font-semibold"
+                  : "border-gray-300 hover:border-gray-400 text-gray-700"
+              }`}
+            >
+              <Database className="w-6 h-6 mx-auto mb-2" />
+              <div className="text-sm">Ventas + Clientes</div>
+              <div className="text-xs text-gray-500 mt-1">(Más lento)</div>
+            </button>
+
+            <button
+              onClick={() => setTipoImportacion("ventas")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                tipoImportacion === "ventas"
+                  ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold"
+                  : "border-gray-300 hover:border-gray-400 text-gray-700"
+              }`}
+            >
+              <Upload className="w-6 h-6 mx-auto mb-2" />
+              <div className="text-sm">Solo Ventas</div>
+              <div className="text-xs text-gray-500 mt-1">(Recomendado)</div>
+            </button>
+
+            <button
+              onClick={() => setTipoImportacion("clientes")}
+              className={`p-4 rounded-xl border-2 transition-all ${
+                tipoImportacion === "clientes"
+                  ? "border-purple-500 bg-purple-50 text-purple-700 font-semibold"
+                  : "border-gray-300 hover:border-gray-400 text-gray-700"
+              }`}
+            >
+              <Database className="w-6 h-6 mx-auto mb-2" />
+              <div className="text-sm">Solo Clientes</div>
+              <div className="text-xs text-gray-500 mt-1">(Rápido)</div>
+            </button>
+          </div>
+        </div>
+
         {/* Info */}
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
           <p className="text-sm text-blue-900">
-            <strong>Archivo requerido:</strong> Excel con hoja "VentasPOD" que contenga las columnas: <strong>Fecha</strong>, <strong>Cliente</strong> (código), <strong>Nombre Cliente</strong>.
+            {tipoImportacion === "ventas" && (
+              <>
+                <strong>Archivo requerido:</strong> Excel con hoja "VentasPOD" que contenga: <strong>Fecha</strong>, <strong>Cliente</strong>, <strong>Nombre Cliente</strong>.
+              </>
+            )}
+            {tipoImportacion === "clientes" && (
+              <>
+                <strong>Archivo requerido:</strong> Excel con hoja "clientes" que contenga: <strong>CODIGO</strong>, <strong>NOMBRE</strong>, <strong>RUTA</strong>, <strong>ZONA</strong>, <strong>ACTIVO</strong>.
+              </>
+            )}
+            {tipoImportacion === "ambos" && (
+              <>
+                <strong>Archivo requerido:</strong> Excel con hojas "VentasPOD" y "clientes" con las columnas correspondientes.
+              </>
+            )}
           </p>
         </div>
 

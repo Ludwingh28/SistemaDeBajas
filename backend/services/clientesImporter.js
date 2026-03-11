@@ -123,14 +123,49 @@ async function procesarExcelClientesStreaming(filePath, sheetName = 'clientes', 
  * Importa clientes desde Excel a MySQL usando STREAMING
  * @param {string} filePath - Ruta al archivo Excel
  * @param {boolean} reemplazar - Si true, reemplaza todos los datos. Si false, actualiza/agrega
+ * @param {string} originalName - Nombre original del archivo (opcional, para detectar tipo)
  * @returns {Promise<Object>} Resultado de la importación
  */
-export async function importarClientesDesdeExcel(filePath, reemplazar = false) {
+export async function importarClientesDesdeExcel(filePath, reemplazar = false, originalName = null) {
   try {
     console.log('\n🔄 Iniciando importación de clientes (modo streaming)...');
 
+    // Detectar si es .xls por nombre original o ruta
+    const nombreParaDeteccion = originalName || filePath;
+    const esArchivoXLS = nombreParaDeteccion.toLowerCase().endsWith('.xls') &&
+                         !nombreParaDeteccion.toLowerCase().endsWith('.xlsx');
+
+    // Si es archivo .xls, convertir a .xlsx primero
+    let processPath = filePath;
+    if (esArchivoXLS) {
+      console.log('📝 Detectado archivo .xls antiguo, convirtiendo a .xlsx...');
+      const XLSX = await import('xlsx');
+      const fs = await import('fs');
+
+      // Leer .xls
+      const buffer = fs.readFileSync(filePath);
+      const workbook = XLSX.read(buffer, { type: 'buffer' });
+
+      // Convertir a .xlsx
+      const xlsxPath = filePath + '.xlsx';
+      XLSX.writeFile(workbook, xlsxPath);
+      processPath = xlsxPath;
+      console.log(`✓ Convertido a: ${xlsxPath}`);
+    }
+
     // Procesar con streaming (inserta directamente sin cargar todo en memoria)
-    const resultado = await procesarExcelClientesStreaming(filePath, 'clientes', 5, reemplazar);
+    const resultado = await procesarExcelClientesStreaming(processPath, 'clientes', 5, reemplazar);
+
+    // Limpiar archivo temporal .xlsx si se convirtió
+    if (processPath !== filePath) {
+      try {
+        const fs = await import('fs');
+        fs.unlinkSync(processPath);
+        console.log(`🗑️  Archivo temporal eliminado: ${processPath}`);
+      } catch (e) {
+        console.warn('No se pudo eliminar archivo temporal:', e.message);
+      }
+    }
 
     if (resultado.insertados === 0) {
       return {
