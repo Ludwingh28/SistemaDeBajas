@@ -3,6 +3,9 @@ import path from 'path';
 import multer from 'multer';
 import { importarVentasDesdeExcel } from '../services/ventasImporter.js';
 import { importarClientesDesdeExcel } from '../services/clientesImporter.js';
+import { sincronizarClientesDualpoint } from '../services/seleniumSync.js';
+import { inhabilitarClientesAprobados } from '../services/inhabilitacionService.js';
+import { getSchedulerInfo } from '../config/scheduler.js';
 import Venta from '../models/Venta.js';
 import Cliente from '../models/Cliente.js';
 
@@ -233,6 +236,137 @@ router.post('/migracion-inicial', async (req, res, next) => {
       success: false,
       message: error.message
     });
+  }
+});
+
+/**
+ * POST /api/sincronizar-clientes
+ * Sincronizar clientes desde los 3 sistemas Dualpoint (Santa Cruz, Cochabamba, La Paz)
+ * Usa Selenium para descargar automáticamente los archivos .xls e importarlos
+ */
+router.post('/sincronizar-clientes', async (req, res, next) => {
+  try {
+    const reemplazar = req.body.reemplazar === 'true';
+
+    console.log('\n🤖 Iniciando sincronización automática desde Dualpoint');
+    console.log(`   Modo: ${reemplazar ? 'REEMPLAZAR' : 'AGREGAR/ACTUALIZAR'}`);
+
+    const resultado = await sincronizarClientesDualpoint(reemplazar);
+
+    if (resultado.success) {
+      res.json({
+        success: true,
+        message: resultado.message,
+        zonas: resultado.zonas,
+        totalRegistros: resultado.totalRegistros,
+        zonasExitosas: resultado.zonasExitosas,
+        zonasFallidas: resultado.zonasFallidas
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: resultado.message,
+        error: resultado.error
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error en sincronización de clientes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en sincronización de clientes',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/inhabilitar-clientes
+ * Inhabilita clientes aprobados cambiándolos a rutas genéricas en Dualpoint
+ */
+router.post('/inhabilitar-clientes', async (req, res, next) => {
+  try {
+    console.log('\n[INHABILITACION] Iniciando proceso de inhabilitación manual');
+
+    // Obtener nombre del supervisor desde el body (enviado desde el frontend)
+    const supervisorNombre = req.body.supervisorNombre || 'MANUAL';
+
+    const resultado = await inhabilitarClientesAprobados('MANUAL', supervisorNombre);
+
+    if (resultado.success) {
+      res.json({
+        success: true,
+        message: resultado.message,
+        totalClientes: resultado.totalClientes,
+        procesados: resultado.procesados,
+        exitosos: resultado.exitosos,
+        fallidos: resultado.fallidos,
+        omitidos: resultado.omitidos,
+        tiempoTotal: resultado.tiempoTotal,
+        zonas: resultado.zonas,
+        detalles: resultado.detalles
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Error en inhabilitación de clientes',
+        error: resultado.error
+      });
+    }
+  } catch (error) {
+    console.error('[ERROR] Error en inhabilitación de clientes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error en inhabilitación de clientes',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/test-cron/status
+ * Ver estado de los cron jobs programados
+ */
+router.get('/test-cron/status', (req, res) => {
+  const info = getSchedulerInfo();
+  res.json({
+    success: true,
+    scheduler: info,
+    horariosActuales: {
+      'Sync Rutas': '6:00 AM y 7:00 PM (todos los días)',
+      'Inhabilitacion Clientes': '9:00 AM (sábados)',
+      'Sync Clientes': '12:00 PM (sábados)',
+      timezone: 'America/La_Paz'
+    }
+  });
+});
+
+/**
+ * POST /api/test-cron/inhabilitar
+ * Simula exactamente lo que ejecuta el cron del sábado 9AM (modo AUTOMATICA)
+ */
+router.post('/test-cron/inhabilitar', async (req, res) => {
+  try {
+    console.log('\n[TEST-CRON] ========== SIMULANDO CRON SABADO 9:00 AM ==========');
+    console.log('[TEST-CRON] Inhabilitando clientes aprobados en Dualpoint...\n');
+    const resultado = await inhabilitarClientesAprobados('AUTOMATICA', 'Sistema_de_Bajas_v1.5');
+    res.json({ success: true, resultado });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/test-cron/sincronizar-clientes
+ * Simula exactamente lo que ejecuta el cron del sábado 12PM (modo AGREGAR/ACTUALIZAR)
+ */
+router.post('/test-cron/sincronizar-clientes', async (req, res) => {
+  try {
+    console.log('\n[TEST-CRON] ========== SIMULANDO CRON SABADO 12:00 PM ==========');
+    console.log('[TEST-CRON] Sincronizando clientes desde Dualpoint...\n');
+    const resultado = await sincronizarClientesDualpoint(false); // false = no reemplazar, igual que el cron
+    res.json({ success: true, resultado });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

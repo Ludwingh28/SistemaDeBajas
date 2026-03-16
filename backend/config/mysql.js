@@ -11,21 +11,23 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'sistema_bajas',
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+  connectionLimit: 50, // ✅ Aumentado de 10 a 50 para manejar más concurrencia
+  queueLimit: 100, // ✅ Límite de 100 requests en cola (previene memory leak)
   enableKeepAlive: true,
-  keepAliveInitialDelay: 0
+  keepAliveInitialDelay: 0,
+  idleTimeout: 60000, // ✅ Cerrar conexiones inactivas después de 60 segundos
+  maxIdle: 10 // ✅ Mantener máximo 10 conexiones idle
 });
 
 // Función para verificar la conexión
 export const verificarConexion = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✓ Conexión a MySQL exitosa');
+    console.log('[OK] Conexion a MySQL exitosa');
     connection.release();
     return true;
   } catch (error) {
-    console.error('✗ Error conectando a MySQL:', error.message);
+    console.error('[ERROR] Error conectando a MySQL:', error.message);
     return false;
   }
 };

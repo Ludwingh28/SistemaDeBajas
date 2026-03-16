@@ -15,14 +15,27 @@ const GestionMotivos = ({ onBack }) => {
 
   const cargarMotivos = async () => {
     try {
+      console.log('[DEBUG] Cargando motivos...');
       const response = await axios.get("/api/motivos");
-      setMotivos(response.data.motivos || []);
+      console.log('[DEBUG] Respuesta recibida:', response.data);
+      console.log('[DEBUG] Motivos array:', response.data.motivos);
+      console.log('[DEBUG] Total motivos:', response.data.total);
+
+      if (response.data && response.data.motivos && Array.isArray(response.data.motivos)) {
+        setMotivos(response.data.motivos);
+        console.log('[DEBUG] Estado actualizado con', response.data.motivos.length, 'motivos');
+      } else {
+        console.error('[DEBUG] Respuesta inválida:', response.data);
+        setMotivos([]);
+      }
     } catch (error) {
-      console.error("Error cargando motivos:", error);
+      console.error("❌ Error cargando motivos:", error);
+      console.error("Error response:", error.response);
+      console.error("Error request:", error.request);
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "No se pudieron cargar los motivos",
+        text: error.response?.data?.error || "No se pudieron cargar los motivos. Verifica la consola del navegador.",
       });
     }
   };

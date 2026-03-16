@@ -10,7 +10,7 @@ const ActualizarVentas = ({ onBack }) => {
   const [progress, setProgress] = useState(0);
   const [stats, setStats] = useState({ total: 0, min_fecha: null, max_fecha: null, dias: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [tipoImportacion, setTipoImportacion] = useState("ambos"); // 'ambos', 'ventas', 'clientes'
+  const [tipoImportacion, setTipoImportacion] = useState("ventas"); // 'ambos', 'ventas', 'clientes'
 
   useEffect(() => {
     cargarEstadisticas();
@@ -216,65 +216,40 @@ const ActualizarVentas = ({ onBack }) => {
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-700 mb-3">Tipo de Importación:</label>
           <div className="grid grid-cols-3 gap-4">
-            <button
-              onClick={() => setTipoImportacion("ambos")}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                tipoImportacion === "ambos"
-                  ? "border-green-500 bg-green-50 text-green-700 font-semibold"
-                  : "border-gray-300 hover:border-gray-400 text-gray-700"
-              }`}
-            >
-              <Database className="w-6 h-6 mx-auto mb-2" />
-              <div className="text-sm">Ventas + Clientes</div>
-              <div className="text-xs text-gray-500 mt-1">(Más lento)</div>
-            </button>
 
+            {/* LEGACY: Ventas + Clientes */}
+            <div className="relative p-4 rounded-xl border-2 border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed">
+              <span className="absolute top-2 right-2 text-xs bg-gray-400 text-white px-2 py-0.5 rounded-full font-semibold">Legacy</span>
+              <Database className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+              <div className="text-sm text-gray-400 text-center">Ventas + Clientes</div>
+              <div className="text-xs text-gray-400 mt-1 text-center">Descontinuado</div>
+            </div>
+
+            {/* ACTIVO: Solo Ventas */}
             <button
               onClick={() => setTipoImportacion("ventas")}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                tipoImportacion === "ventas"
-                  ? "border-blue-500 bg-blue-50 text-blue-700 font-semibold"
-                  : "border-gray-300 hover:border-gray-400 text-gray-700"
-              }`}
+              className="p-4 rounded-xl border-2 border-blue-500 bg-blue-50 text-blue-700 font-semibold transition-all"
             >
               <Upload className="w-6 h-6 mx-auto mb-2" />
               <div className="text-sm">Solo Ventas</div>
-              <div className="text-xs text-gray-500 mt-1">(Recomendado)</div>
+              <div className="text-xs text-blue-500 mt-1">(Activo)</div>
             </button>
 
-            <button
-              onClick={() => setTipoImportacion("clientes")}
-              className={`p-4 rounded-xl border-2 transition-all ${
-                tipoImportacion === "clientes"
-                  ? "border-purple-500 bg-purple-50 text-purple-700 font-semibold"
-                  : "border-gray-300 hover:border-gray-400 text-gray-700"
-              }`}
-            >
-              <Database className="w-6 h-6 mx-auto mb-2" />
-              <div className="text-sm">Solo Clientes</div>
-              <div className="text-xs text-gray-500 mt-1">(Rápido)</div>
-            </button>
+            {/* LEGACY: Solo Clientes */}
+            <div className="relative p-4 rounded-xl border-2 border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed">
+              <span className="absolute top-2 right-2 text-xs bg-gray-400 text-white px-2 py-0.5 rounded-full font-semibold">Legacy</span>
+              <Database className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+              <div className="text-sm text-gray-400 text-center">Solo Clientes</div>
+              <div className="text-xs text-gray-400 mt-1 text-center">Usar cron-task</div>
+            </div>
+
           </div>
         </div>
 
         {/* Info */}
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
           <p className="text-sm text-blue-900">
-            {tipoImportacion === "ventas" && (
-              <>
-                <strong>Archivo requerido:</strong> Excel con hoja "VentasPOD" que contenga: <strong>Fecha</strong>, <strong>Cliente</strong>, <strong>Nombre Cliente</strong>.
-              </>
-            )}
-            {tipoImportacion === "clientes" && (
-              <>
-                <strong>Archivo requerido:</strong> Excel con hoja "clientes" que contenga: <strong>CODIGO</strong>, <strong>NOMBRE</strong>, <strong>RUTA</strong>, <strong>ZONA</strong>, <strong>ACTIVO</strong>.
-              </>
-            )}
-            {tipoImportacion === "ambos" && (
-              <>
-                <strong>Archivo requerido:</strong> Excel con hojas "VentasPOD" y "clientes" con las columnas correspondientes.
-              </>
-            )}
+            <strong>Archivo requerido:</strong> Excel con hoja "VentasPOD" que contenga: <strong>Fecha</strong>, <strong>Cliente</strong>, <strong>Nombre Cliente</strong>.
           </p>
         </div>
 

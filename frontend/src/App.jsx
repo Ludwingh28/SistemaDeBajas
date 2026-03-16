@@ -49,7 +49,7 @@ function App() {
               </main>
               <footer className="mt-auto py-6 text-center text-gray-600 text-sm">
                 <p>Sistema de Gestión de Bajas © {new Date().getFullYear()}</p>
-                <p className="text-xs mt-1 text-gray-500">Versión 1.0 - Solo para uso interno</p>
+                <p className="text-xs mt-1 text-gray-500">v1.5.0 Stable - Solo para uso interno</p>
               </footer>
             </div>
           }

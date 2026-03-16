@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Tag, Database, Download, LogOut, Shield, Cloud, CheckSquare, FileText } from "lucide-react";
+import { Tag, Database, Download, LogOut, Shield, Cloud, CheckSquare, FileText, RefreshCw, UserX } from "lucide-react";
 import GestionMotivos from "./GestionMotivos";
 import ActualizarVentas from "./ActualizarVentas";
 import DescargarReportes from "./DescargarReportes";
 import VisualizarReportes from "./VisualizarReportes";
 import GestionSupervisores from "./GestionSupervisores";
 import SincronizarGoogleSheets from "./SincronizarGoogleSheets";
+import SincronizarClientes from "./SincronizarClientes";
+import InhabilitarClientes from "./InhabilitarClientes";
 import AprobarSolicitudes from "./AprobarSolicitudes";
 import { useNavigate } from "react-router-dom";
 
@@ -13,9 +15,19 @@ const AdminDashboard = () => {
   const [vistaActiva, setVistaActiva] = useState("menu");
   const navigate = useNavigate();
 
+  // Obtener nombre del supervisor del sessionStorage
+  const supervisorNombre = sessionStorage.getItem("supervisorNombre") || "";
+
+  // Lista de usuarios con acceso completo (admin)
+  const usuariosAdmin = ["Steven Valverde", "Ludwing Herrera", "Admin"];
+
+  // Verificar si el usuario actual es admin
+  const esAdmin = usuariosAdmin.includes(supervisorNombre);
+
   const handleLogout = () => {
     sessionStorage.removeItem("supervisorAuth");
     sessionStorage.removeItem("supervisorCode");
+    sessionStorage.removeItem("supervisorNombre");
     navigate("/");
   };
 
@@ -26,6 +38,7 @@ const AdminDashboard = () => {
       description: "Revisar y aprobar solicitudes MANUAL pendientes",
       icon: CheckSquare,
       color: "from-yellow-500 to-yellow-700",
+      adminOnly: false,
     },
     {
       id: "visualizar",
@@ -33,6 +46,7 @@ const AdminDashboard = () => {
       description: "Consultar historial de solicitudes en pantalla",
       icon: FileText,
       color: "from-purple-500 to-purple-700",
+      adminOnly: false,
     },
     {
       id: "motivos",
@@ -40,6 +54,7 @@ const AdminDashboard = () => {
       description: "Agregar y administrar motivos de baja",
       icon: Tag,
       color: "from-pink-500 to-pink-700",
+      adminOnly: true,
     },
     {
       id: "ventas",
@@ -47,6 +62,7 @@ const AdminDashboard = () => {
       description: "Cargar nuevos datos de ventas desde Excel",
       icon: Database,
       color: "from-green-500 to-green-700",
+      adminOnly: true,
     },
     {
       id: "reportes",
@@ -54,6 +70,7 @@ const AdminDashboard = () => {
       description: "Exportar reportes históricos a Excel",
       icon: Download,
       color: "from-blue-500 to-blue-700",
+      adminOnly: false,
     },
     {
       id: "supervisores",
@@ -61,6 +78,7 @@ const AdminDashboard = () => {
       description: "Crear y cambiar códigos de acceso de supervisores",
       icon: Shield,
       color: "from-indigo-500 to-indigo-700",
+      adminOnly: true,
     },
     {
       id: "googlesheets",
@@ -68,8 +86,33 @@ const AdminDashboard = () => {
       description: "Actualizar datos de planificación de rutas manualmente",
       icon: Cloud,
       color: "from-cyan-500 to-cyan-700",
+      adminOnly: true,
+    },
+    {
+      id: "sincronizarclientes",
+      title: "Sincronizar Clientes",
+      description: "Actualizar clientes desde Dualpoint (Santa Cruz, Cochabamba, La Paz)",
+      icon: RefreshCw,
+      color: "from-teal-500 to-teal-700",
+      adminOnly: true,
+    },
+    {
+      id: "inhabilitarclientes",
+      title: "Inhabilitar Clientes",
+      description: "Mover clientes aprobados a rutas genéricas en Dualpoint",
+      icon: UserX,
+      color: "from-red-500 to-red-700",
+      adminOnly: true,
     },
   ];
+
+  // Filtrar opciones según permisos del usuario
+  const opcionesFiltradas = menuOptions.filter(option => {
+    // Si la opción no requiere admin, siempre mostrarla
+    if (!option.adminOnly) return true;
+    // Si requiere admin, solo mostrar si el usuario es admin
+    return esAdmin;
+  });
 
   const renderContent = () => {
     switch (vistaActiva) {
@@ -87,10 +130,14 @@ const AdminDashboard = () => {
         return <GestionSupervisores onBack={() => setVistaActiva("menu")} />;
       case "googlesheets":
         return <SincronizarGoogleSheets onBack={() => setVistaActiva("menu")} />;
+      case "sincronizarclientes":
+        return <SincronizarClientes onBack={() => setVistaActiva("menu")} />;
+      case "inhabilitarclientes":
+        return <InhabilitarClientes onBack={() => setVistaActiva("menu")} />;
       default:
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {menuOptions.map((option) => {
+            {opcionesFiltradas.map((option) => {
               const Icon = option.icon;
               return (
                 <button
@@ -129,7 +176,7 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Panel de Administración</h1>
-            <p className="text-sm text-gray-600">Sistema de Bajas - Supervisor</p>
+            <p className="text-sm text-gray-600">Sistema de Bajas - {supervisorNombre}</p>
           </div>
 
           <button
@@ -144,6 +191,11 @@ const AdminDashboard = () => {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">{renderContent()}</div>
+
+      {/* Footer */}
+      <footer className="mt-auto py-4 text-center text-gray-400 text-xs border-t bg-white">
+        Sistema de Gestión de Bajas © {new Date().getFullYear()} &nbsp;·&nbsp; v1.5.0 Stable
+      </footer>
     </div>
   );
 };

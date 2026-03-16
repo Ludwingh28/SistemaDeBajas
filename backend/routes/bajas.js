@@ -8,6 +8,7 @@ import { agregarSolicitudAlReporte } from "../services/reportGenerator.js";
 import { logSolicitud } from "../logs/logger.js";
 import { AppError } from "../middleware/errorHandler.js";
 import Reporte from "../models/Reporte.js";
+import { sanitizeTextFields, handleValidationErrors } from "../middleware/sanitize.js";
 
 const router = express.Router();
 
@@ -25,6 +26,8 @@ router.post(
   bajasLimiter, // Rate limit específico
   cleanupUploads, // Limpiar archivos si hay error
   uploadPhotos, // Procesar upload de fotos
+  sanitizeTextFields, // ✅ Sanitizar inputs contra XSS
+  handleValidationErrors, // ✅ Manejar errores de validación
   validateRequiredFields(["codigoCliente", "motivo"]), // Validar campos
   async (req, res, next) => {
     try {

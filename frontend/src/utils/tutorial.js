@@ -55,19 +55,12 @@ export const iniciarTutorial = () => {
           title: "📊 Resultados Posibles",
           description: `
             <div class="text-left space-y-3">
-              <p class="font-semibold mb-3">El sistema puede devolver 3 resultados:</p>
+              <p class="font-semibold mb-3">El sistema puede devolver 2 resultados:</p>
               <div class="flex items-start space-x-2 mb-2">
                 <span class="text-green-600 font-bold text-xl">✅</span>
                 <div>
                   <p class="font-medium text-green-700">Cliente SÍ puede ser inhabilitado</p>
                   <p class="text-sm text-gray-600">No tiene ventas o su última venta fue hace más de 90 días</p>
-                </div>
-              </div>
-              <div class="flex items-start space-x-2 mb-2">
-                <span class="text-red-600 font-bold text-xl">❌</span>
-                <div>
-                  <p class="font-medium text-red-700">Cliente NO puede ser inhabilitado</p>
-                  <p class="text-sm text-gray-600">Tiene ventas recientes (menos de 90 días)</p>
                 </div>
               </div>
               <div class="flex items-start space-x-2">

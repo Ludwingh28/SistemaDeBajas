@@ -331,7 +331,7 @@ const DescargarReportes = ({ onBack }) => {
         <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
           <p className="text-sm text-yellow-800">
             <strong>Nota:</strong> El reporte incluirá todas las solicitudes de inhabilitación registradas en el rango de fechas seleccionado, incluyendo: código, nombre, motivo, zona, ruta, vendedor,
-            resultado y razón.
+            resultado, razón, y también información de inhabilitación en Dualpoint (fecha, tipo de ejecución manual/automática, y ejecutado por).
           </p>
         </div>
       </div>

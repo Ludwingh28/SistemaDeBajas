@@ -106,7 +106,11 @@ router.post(
         { header: "Ruta", key: "ruta", width: 15 },
         { header: "Vendedor", key: "vendedor", width: 25 },
         { header: "Resultado", key: "resultado", width: 12 },
-        { header: "Razón", key: "razon", width: 40 }
+        { header: "Razón", key: "razon", width: 40 },
+        { header: "Inhabilitado Dualpoint", key: "inhabilitado", width: 18 },
+        { header: "Fecha Inhabilitación", key: "fechaInhabilitacion", width: 20 },
+        { header: "Tipo Ejecución", key: "tipoEjecucion", width: 15 },
+        { header: "Ejecutado Por", key: "ejecutadoPor", width: 25 }
       ];
 
       // Agregar datos
@@ -120,7 +124,11 @@ router.post(
           ruta: r.ruta || "N/A",
           vendedor: r.vendedor || "N/A",
           resultado: r.resultado,
-          razon: r.razon || ""
+          razon: r.razon || "",
+          inhabilitado: r.inhabilitadoDualpoint ? "SÍ" : "NO",
+          fechaInhabilitacion: r.fechaInhabilitacion ? new Date(r.fechaInhabilitacion).toLocaleString('es-BO') : "",
+          tipoEjecucion: r.tipoEjecucionInhabilitacion || "",
+          ejecutadoPor: r.ejecutadoPorInhabilitacion || ""
         });
       });
 
@@ -366,7 +374,11 @@ router.get(
           supervisorAprobador: r.supervisorAprobador,
           fechaAprobacion: r.fechaAprobacion,
           comentarioAprobacion: r.comentarioAprobacion,
-          fotosRutas: r.fotosRutas || []
+          fotosRutas: r.fotosRutas || [],
+          inhabilitadoDualpoint: r.inhabilitadoDualpoint || 0,
+          fechaInhabilitacion: r.fechaInhabilitacion,
+          tipoEjecucionInhabilitacion: r.tipoEjecucionInhabilitacion,
+          ejecutadoPorInhabilitacion: r.ejecutadoPorInhabilitacion
         }))
       });
     } catch (error) {

@@ -450,6 +450,43 @@ const VisualizarReportes = ({ onBack }) => {
                 </div>
               )}
 
+              {/* Información de Inhabilitación en Dualpoint (si existe) */}
+              {selectedReporte.inhabilitadoDualpoint && (
+                <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                  <h4 className="text-lg font-bold text-gray-800 mb-3">Información de Inhabilitación en Dualpoint</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Estado</p>
+                      <p className="font-bold text-red-600">INHABILITADO</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Fecha de Inhabilitación</p>
+                      <p className="text-gray-900">
+                        {selectedReporte.fechaInhabilitacion
+                          ? new Date(selectedReporte.fechaInhabilitacion).toLocaleString('es-BO')
+                          : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Tipo de Ejecución</p>
+                      <p className="text-gray-900 font-bold">
+                        {selectedReporte.tipoEjecucionInhabilitacion === 'MANUAL' ? (
+                          <span className="text-orange-600">MANUAL</span>
+                        ) : selectedReporte.tipoEjecucionInhabilitacion === 'AUTOMATICA' ? (
+                          <span className="text-blue-600">AUTOMÁTICA</span>
+                        ) : 'N/A'}
+                      </p>
+                    </div>
+                    {selectedReporte.ejecutadoPorInhabilitacion && (
+                      <div>
+                        <p className="text-sm text-gray-600 font-semibold">Ejecutado por</p>
+                        <p className="text-gray-900 font-bold">{selectedReporte.ejecutadoPorInhabilitacion}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Evidencias Fotográficas */}
               {selectedReporte.fotosRutas && selectedReporte.fotosRutas.length > 0 && (
                 <div className="mb-6">

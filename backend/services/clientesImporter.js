@@ -64,20 +64,24 @@ async function procesarExcelClientesStreaming(filePath, sheetName = 'clientes', 
             }
           });
 
-          // Extraer datos necesarios: CODIGO, NOMBRE, RUTA, ZONA, ACTIVO
+          // Extraer datos necesarios: CODIGO, NOMBRE, RUTA, ZONA
           const codigo = rowData['CODIGO'];
           const nombre = rowData['NOMBRE'];
           const ruta = rowData['RUTA'];
           const zona = rowData['ZONA'];
-          const activo = rowData['ACTIVO'];
 
           if (codigo) {
+            const rutaStr = (ruta?.toString().trim() || '').toUpperCase();
+            // Cliente INACTIVO solo si su ruta contiene "GENERICA"
+            const esRutaGenerica = rutaStr.includes('GENERICA') || rutaStr.includes('GENERICO');
+            const activo = !esRutaGenerica; // Activo = true, excepto si es ruta genérica
+
             batch.push({
               codigo: codigo.toString().trim(),
               nombre: nombre?.toString().trim() || '',
               ruta: ruta?.toString().trim() || '',
               zona: zona?.toString().trim() || '',
-              activo: activo === true || activo === 1 || activo === 'TRUE' || activo === 'true'
+              activo: activo
             });
 
             totalProcesados++;

@@ -48,6 +48,10 @@ backend/reportes/*.xlsx
 backend/reportes/*.csv
 !backend/reportes/PLANIFICACION - FINAL PLANIFICACION-DB.csv
 
+# Descargas de Selenium (archivos temporales)
+backend/downloads/*
+!backend/downloads/.gitkeep
+
 # Base de datos local
 *.sqlite
 *.db
@@ -82,6 +86,8 @@ scripts/test*.js
 # Scripts de prueba y debug
 backend/inspect-*.js
 backend/test-*.js
+backend/scripts/test*.js
+backend/scripts/diagnosticar*.js
 
 # Archivos Excel de prueba
 backend/data/*.xls
