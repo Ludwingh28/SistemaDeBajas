@@ -129,18 +129,10 @@ async function ejecutarMigracion() {
       console.log(`   - ${col.Field} (${col.Type}) ${col.Null === 'YES' ? 'NULL' : 'NOT NULL'} ${col.Default ? `DEFAULT ${col.Default}` : ''}`);
     });
 
-    // Contar clientes pendientes
-    const [pendientes] = await connection.query(`
-      SELECT COUNT(*) as total
-      FROM reportes
-      WHERE estado_aprobacion = 'APROBADO'
-        AND (inhabilitado_dualpoint IS NULL OR inhabilitado_dualpoint = 0)
-    `);
-
     console.log('\n' + '='.repeat(60));
     console.log('RESUMEN');
     console.log('='.repeat(60));
-    console.log(`Clientes aprobados pendientes de inhabilitar: ${pendientes[0].total}`);
+    console.log('Columnas de inhabilitacion: OK');
     console.log('='.repeat(60) + '\n');
 
     console.log('[OK] Migracion completada exitosamente\n');

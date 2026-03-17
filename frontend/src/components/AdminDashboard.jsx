@@ -21,8 +21,8 @@ const AdminDashboard = () => {
   // Lista de usuarios con acceso completo (admin)
   const usuariosAdmin = ["Steven Valverde", "Ludwing Herrera", "Admin"];
 
-  // Verificar si el usuario actual es admin
-  const esAdmin = usuariosAdmin.includes(supervisorNombre);
+  // Verificar si el usuario actual es admin (case-insensitive)
+  const esAdmin = usuariosAdmin.some(u => u.toLowerCase() === supervisorNombre.toLowerCase());
 
   const handleLogout = () => {
     sessionStorage.removeItem("supervisorAuth");
