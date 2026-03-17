@@ -19,7 +19,7 @@ const AdminDashboard = () => {
   const supervisorNombre = sessionStorage.getItem("supervisorNombre") || "";
 
   // Lista de usuarios con acceso completo (admin)
-  const usuariosAdmin = ["Steven Valverde", "Ludwing Herrera", "Admin"];
+  const usuariosAdmin = ["Steven Valverde", "Ludwing Herrera", "Admin", "Supervisor ADMIN"];
 
   // Verificar si el usuario actual es admin (case-insensitive)
   const esAdmin = usuariosAdmin.some(u => u.toLowerCase() === supervisorNombre.toLowerCase());
